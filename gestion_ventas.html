@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gestión de Ventas</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: sans-serif; padding: 20px; background: #f5f5f5; color: #333; }
+      button { cursor: pointer; padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; }
+      .registro-ventas, .registros-diarios { background: #4a90d9; color: white; margin-right: 8px; margin-bottom: 16px; }
+      .registro-ventas:hover, .registros-diarios:hover { background: #357abd; }
+      .guardar-venta { background: #27ae60; color: white; margin-top: 16px; padding: 10px 24px; font-size: 15px; }
+      .guardar-venta:hover { background: #1e8449; }
+      .eliminar { background: #e74c3c; color: white; padding: 3px 10px; font-size: 12px; border-radius: 4px; }
+      h1 { margin-bottom: 16px; font-size: 22px; }
+      h3 { margin: 16px 0 8px; font-size: 16px; }
+      form div { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      label { min-width: 280px; font-size: 14px; }
+      input[type="number"], input[type="text"] { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 80px; }
+      input[type="text"] { width: 200px; }
+      #resultado { font-weight: bold; font-size: 18px; margin: 16px 0 8px; color: #2c3e50; }
+      #vuelto { font-size: 15px; color: #27ae60; margin-bottom: 8px; }
+      .filtros-fecha { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+      .filtros-fecha label { min-width: auto; font-size: 14px; }
+      select, input[type="number"].anio { padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+
+      /* Resumen stats */
+      .stats-container { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+      .stat-card { background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex: 1; min-width: 180px; }
+      .stat-card .stat-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+      .stat-card .stat-value { font-size: 26px; font-weight: bold; color: #2c3e50; }
+      .stat-card .stat-sub { font-size: 12px; color: #aaa; margin-top: 2px; }
+      .stat-card.verde .stat-value { color: #27ae60; }
+      .stat-card.azul .stat-value { color: #2980b9; }
+      .stat-card.naranja .stat-value { color: #e67e22; }
+
+      /* Tabla de ventas por día */
+      .tabla-wrap { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+      .tabla-wrap h2 { font-size: 15px; margin-bottom: 12px; color: #555; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th { text-align: left; padding: 6px 10px; background: #f0f0f0; font-weight: 600; color: #555; }
+      td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+      tr:last-child td { border-bottom: none; }
+      tr:hover td { background: #fafafa; }
+      .total-row td { font-weight: bold; background: #f7f9fc; color: #2c3e50; }
+
+      /* Historial registros */
+      #historial p { background: white; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); display: flex; justify-content: space-between; align-items: center; }
+      .sin-registros { color: #888; font-size: 14px; padding: 12px 0; }
+      .exportar-excel { background: #1d6f42; color: white; padding: 10px 20px; font-size: 14px; display:inline-flex; align-items:center; gap:8px; border-radius:6px; margin-bottom:16px; }
+      .exportar-excel:hover { background: #155230; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <button type="button" class="registro-ventas" onclick="mostrarSeccion('ventas')">Registro de ventas</button>
+      <button type="button" class="registros-diarios" onclick="mostrarSeccion('diarios')">Registros diarios</button>
+    </div>
+
+    <!-- Sección Registro de Ventas -->
+    <div id="ventas" style="display:none">
+      <h1>Registro de Servicios</h1>
+      <form id="formServicios">
+        <div><label>Impresiones Blanco y Negro ($150):</label><input type="number" id="impBN" min="0" value="0" oninput="actualizar()"/><span id="sub_impBN">$0</span></div>
+        <div><label>Impresiones Color - Texto ($300):</label><input type="number" id="impColorTexto" min="0" value="0" oninput="actualizar()"/><span id="sub_impColorTexto">$0</span></div>
+        <div><label>Impresiones Color - Imagen Pequeña ($400):</label><input type="number" id="impColorPeq" min="0" value="0" oninput="actualizar()"/><span id="sub_impColorPeq">$0</span></div>
+        <div><label>Impresiones Color - Imagen Mediana ($500):</label><input type="number" id="impColorMed" min="0" value="0" oninput="actualizar()"/><span id="sub_impColorMed">$0</span></div>
+        <div><label>Impresiones Color - Hoja Completa ($700):</label><input type="number" id="impColorHoja" min="0" value="0" oninput="actualizar()"/><span id="sub_impColorHoja">$0</span></div>
+        <div><label>Fotografía 10x15 cm ($600 c/u o 3x$1200):</label><input type="number" id="foto10x15" min="0" value="0" oninput="actualizar()"/><span id="sub_foto10x15">$0</span></div>
+        <div><label>Fotografía 13x18 cm ($1500):</label><input type="number" id="foto13x18" min="0" value="0" oninput="actualizar()"/><span id="sub_foto13x18">$0</span></div>
+        <div><label>Fotografía 21x30 cm ($2500):</label><input type="number" id="foto21x30" min="0" value="0" oninput="actualizar()"/><span id="sub_foto21x30">$0</span></div>
+        <div><label>Fotocopias Blanco y Negro ($400):</label><input type="number" id="fotocopiaBN" min="0" value="0" oninput="actualizar()"/><span id="sub_fotocopiaBN">$0</span></div>
+        <div><label>Fotocopias Color ($500):</label><input type="number" id="fotocopiaColor" min="0" value="0" oninput="actualizar()"/><span id="sub_fotocopiaColor">$0</span></div>
+        <div><label>Plastificado Pequeño ($500):</label><input type="number" id="plasticoPeq" min="0" value="0" oninput="actualizar()"/><span id="sub_plasticoPeq">$0</span></div>
+        <div><label>Plastificado Mediano ($600):</label><input type="number" id="plasticoMed" min="0" value="0" oninput="actualizar()"/><span id="sub_plasticoMed">$0</span></div>
+        <div><label>Plastificado Grande ($1000):</label><input type="number" id="plasticoGrande" min="0" value="0" oninput="actualizar()"/><span id="sub_plasticoGrande">$0</span></div>
+        <div><label>Llaveros ($2500 c/u):</label><input type="number" id="llaveros" min="0" value="0" oninput="actualizar()"/><span id="sub_llaveros">$0</span></div>
+        <h3>Servicio Personalizado</h3>
+        <div><label>Nombre del servicio:</label><input type="text" id="servicioNombre"/></div>
+        <div><label>Cantidad:</label><input type="number" id="servicioCantidad" min="0" value="0" oninput="actualizarPersonalizado()"/></div>
+        <div><label>Valor unitario ($):</label><input type="number" id="servicioValor" min="0" value="0" oninput="actualizarPersonalizado()"/></div>
+        <div><span id="sub_servicioPersonalizado">$0</span></div>
+        <div id="resultado">Total a pagar: $0</div>
+
+        <!-- Fecha de la venta -->
+        <div style="margin:10px 0 4px;padding:10px 14px;background:#fef9e7;border-left:3px solid #f39c12;border-radius:4px;">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <label style="min-width:auto;font-weight:600;color:#7d6608;">Fecha de la venta:</label>
+            <label style="min-width:auto;display:flex;align-items:center;gap:6px;font-size:14px;">
+              <input type="radio" name="tipoFecha" id="fechaHoy" value="hoy" checked onchange="cambiarTipoFecha()"/> Hoy
+            </label>
+            <label style="min-width:auto;display:flex;align-items:center;gap:6px;font-size:14px;">
+              <input type="radio" name="tipoFecha" id="fechaManual" value="manual" onchange="cambiarTipoFecha()"/> Fecha anterior
+            </label>
+          </div>
+          <div id="selectorFechaManual" style="display:none;margin-top:10px;display:none;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <label style="min-width:auto;font-size:14px;">Día:</label>
+              <select id="fechaDia" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:14px;">
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                <option value="16">16</option><option value="17">17</option><option value="18">18</option>
+                <option value="19">19</option><option value="20">20</option><option value="21">21</option>
+                <option value="22">22</option><option value="23">23</option><option value="24">24</option>
+                <option value="25">25</option><option value="26">26</option><option value="27">27</option>
+                <option value="28">28</option><option value="29">29</option><option value="30">30</option>
+                <option value="31">31</option>
+              </select>
+              <label style="min-width:auto;font-size:14px;">Mes:</label>
+              <select id="fechaMes" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:14px;">
+                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+              </select>
+              <label style="min-width:auto;font-size:14px;">Año:</label>
+              <input type="number" id="fechaAnio" min="2000" max="2100" style="width:80px;padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:14px;"/>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin:12px 0 4px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <label style="min-width:auto;font-weight:600;">Pagan con:</label>
+          <label style="min-width:auto;display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="metodoPago" id="pagoEfectivo" value="efectivo" checked onchange="cambiarMetodoPago()"/> Efectivo
+          </label>
+          <label style="min-width:auto;display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="metodoPago" id="pagoTransferencia" value="transferencia" onchange="cambiarMetodoPago()"/> Transferencia
+          </label>
+        </div>
+
+        <div id="seccionEfectivo">
+          <div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+            <label style="min-width:160px;">Monto entregado ($):</label>
+            <input type="number" id="pago" min="0" placeholder="0" oninput="actualizarVuelto()"/>
+          </div>
+          <div id="vuelto" style="margin-top:4px;"></div>
+        </div>
+
+        <div id="seccionTransferencia" style="display:none;">
+          <div style="margin-top:6px;background:#eaf4fb;border-left:3px solid #2980b9;padding:8px 12px;border-radius:4px;font-size:14px;color:#1a5276;">
+            Pago por transferencia — sin vuelto
+          </div>
+        </div>
+
+        <button type="button" class="guardar-venta" onclick="guardarVenta()">Guardar Venta</button>
+      </form>
+    </div>
+
+    <!-- Sección Registros Diarios -->
+    <div id="diarios" style="display:none">
+      <h1>Registros Diarios</h1>
+
+      <button type="button" class="exportar-excel" onclick="exportarExcel()">
+        ⬇ Exportar a Excel
+      </button>
+
+      <div class="filtros-fecha">
+        <div>
+          <label>Días:</label>
+          <select id="selectDia" onchange="mostrarHistorial()">
+            <option value="">Todos</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+            <option value="16">16</option><option value="17">17</option><option value="18">18</option>
+            <option value="19">19</option><option value="20">20</option><option value="21">21</option>
+            <option value="22">22</option><option value="23">23</option><option value="24">24</option>
+            <option value="25">25</option><option value="26">26</option><option value="27">27</option>
+            <option value="28">28</option><option value="29">29</option><option value="30">30</option>
+            <option value="31">31</option>
+          </select>
+        </div>
+        <div>
+          <label>Mes:</label>
+          <select id="selectMes" onchange="mostrarHistorial()">
+            <option value="">Todos</option>
+            <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+            <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+            <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div>
+          <label>Año:</label>
+          <input type="number" class="anio" id="inputAnio" min="2000" max="2100" placeholder="Año" oninput="mostrarHistorial()"/>
+        </div>
+      </div>
+
+      <!-- Tarjetas de resumen -->
+      <div class="stats-container" id="statsContainer"></div>
+
+      <!-- Tabla totales por día -->
+      <div class="tabla-wrap" id="tablaDiasWrap" style="display:none">
+        <h2 id="tablaDiasTitulo">Total de ventas por día</h2>
+        <table id="tablaDias">
+          <thead><tr><th>Fecha</th><th>N° ventas</th><th>Total del día</th></tr></thead>
+          <tbody id="tablaDiasBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Tabla totales por mes (solo cuando no hay filtro de mes) -->
+      <div class="tabla-wrap" id="tablaMesesWrap" style="display:none">
+        <h2 id="tablaMesesTitulo">Total de ventas por mes</h2>
+        <table id="tablaMeses">
+          <thead><tr><th>Mes</th><th>N° ventas</th><th>Total del mes</th></tr></thead>
+          <tbody id="tablaMesesBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Historial individual -->
+      <div class="tabla-wrap">
+        <h2>Detalle de ventas</h2>
+        <div id="historial"></div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+      let total = 0;
+      let subtotalPersonalizado = 0;
+
+      const cambiarTipoFecha = () => {
+        const esManual = document.getElementById('fechaManual').checked;
+        const selector = document.getElementById('selectorFechaManual');
+        selector.style.display = esManual ? 'flex' : 'none';
+        if (esManual && !document.getElementById('fechaAnio').value) {
+          const hoy = new Date();
+          document.getElementById('fechaDia').value = hoy.getDate();
+          document.getElementById('fechaMes').value = hoy.getMonth() + 1;
+          document.getElementById('fechaAnio').value = hoy.getFullYear();
+        }
+      };
+
+      const mostrarSeccion = (seccion) => {
+        document.getElementById('ventas').style.display = seccion === 'ventas' ? 'block' : 'none';
+        document.getElementById('diarios').style.display = seccion === 'diarios' ? 'block' : 'none';
+        if (seccion === 'diarios') {
+          // Preseleccionar mes y año actual al abrir
+          const hoy = new Date();
+          const selMes = document.getElementById('selectMes');
+          const selAnio = document.getElementById('inputAnio');
+          if (!selMes.value) selMes.value = hoy.getMonth() + 1;
+          if (!selAnio.value) selAnio.value = hoy.getFullYear();
+          mostrarHistorial();
+        }
+      };
+
+      const actualizar = () => {
+        const impBN = (parseInt(document.getElementById('impBN').value)||0)*150;
+        document.getElementById('sub_impBN').innerText = '$'+impBN;
+        const impColorTexto = (parseInt(document.getElementById('impColorTexto').value)||0)*300;
+        document.getElementById('sub_impColorTexto').innerText = '$'+impColorTexto;
+        const impColorPeq = (parseInt(document.getElementById('impColorPeq').value)||0)*400;
+        document.getElementById('sub_impColorPeq').innerText = '$'+impColorPeq;
+        const impColorMed = (parseInt(document.getElementById('impColorMed').value)||0)*500;
+        document.getElementById('sub_impColorMed').innerText = '$'+impColorMed;
+        const impColorHoja = (parseInt(document.getElementById('impColorHoja').value)||0)*700;
+        document.getElementById('sub_impColorHoja').innerText = '$'+impColorHoja;
+        const foto10x15Cant = parseInt(document.getElementById('foto10x15').value)||0;
+        let foto10x15 = foto10x15Cant >= 3 ? Math.floor(foto10x15Cant/3)*1200+(foto10x15Cant%3)*600 : foto10x15Cant*600;
+        document.getElementById('sub_foto10x15').innerText = '$'+foto10x15;
+        const foto13x18 = (parseInt(document.getElementById('foto13x18').value)||0)*1500;
+        document.getElementById('sub_foto13x18').innerText = '$'+foto13x18;
+        const foto21x30 = (parseInt(document.getElementById('foto21x30').value)||0)*2500;
+        document.getElementById('sub_foto21x30').innerText = '$'+foto21x30;
+        const fotocopiaBN = (parseInt(document.getElementById('fotocopiaBN').value)||0)*400;
+        document.getElementById('sub_fotocopiaBN').innerText = '$'+fotocopiaBN;
+        const fotocopiaColor = (parseInt(document.getElementById('fotocopiaColor').value)||0)*500;
+        document.getElementById('sub_fotocopiaColor').innerText = '$'+fotocopiaColor;
+        const plasticoPeq = (parseInt(document.getElementById('plasticoPeq').value)||0)*500;
+        document.getElementById('sub_plasticoPeq').innerText = '$'+plasticoPeq;
+        const plasticoMed = (parseInt(document.getElementById('plasticoMed').value)||0)*600;
+        document.getElementById('sub_plasticoMed').innerText = '$'+plasticoMed;
+        const plasticoGrande = (parseInt(document.getElementById('plasticoGrande').value)||0)*1000;
+        document.getElementById('sub_plasticoGrande').innerText = '$'+plasticoGrande;
+        const llaveros = (parseInt(document.getElementById('llaveros').value)||0)*2500;
+        document.getElementById('sub_llaveros').innerText = '$'+llaveros;
+        total = impBN+impColorTexto+impColorPeq+impColorMed+impColorHoja+foto10x15+foto13x18+foto21x30+fotocopiaBN+fotocopiaColor+plasticoPeq+plasticoMed+plasticoGrande+llaveros+subtotalPersonalizado;
+        document.getElementById('resultado').innerText = 'Total a pagar: $'+total;
+        actualizarVuelto();
+      };
+
+      const actualizarPersonalizado = () => {
+        const cantidad = parseInt(document.getElementById('servicioCantidad').value)||0;
+        const valor = parseInt(document.getElementById('servicioValor').value)||0;
+        subtotalPersonalizado = cantidad*valor;
+        document.getElementById('sub_servicioPersonalizado').innerText = '$'+subtotalPersonalizado;
+        actualizar();
+      };
+
+      const cambiarMetodoPago = () => {
+        const esEfectivo = document.getElementById('pagoEfectivo').checked;
+        document.getElementById('seccionEfectivo').style.display = esEfectivo ? 'block' : 'none';
+        document.getElementById('seccionTransferencia').style.display = esEfectivo ? 'none' : 'block';
+      };
+
+      const actualizarVuelto = () => {
+        const pagoInput = document.getElementById('pago').value;
+        const el = document.getElementById('vuelto');
+        if (pagoInput === '' || pagoInput === null) { el.innerText = ''; return; }
+        const pago = parseInt(pagoInput)||0;
+        if (pago < total) {
+          el.style.color = '#e74c3c';
+          el.innerText = 'El pago es insuficiente.';
+        } else {
+          el.style.color = '#27ae60';
+          el.innerText = 'Vuelto: $'+(pago-total);
+        }
+      };
+
+      const guardarVenta = () => {
+        const metodoPago = document.querySelector('input[name="metodoPago"]:checked').value;
+        const esManual = document.getElementById('fechaManual').checked;
+
+        let dia, mes, año;
+        if (esManual) {
+          dia  = parseInt(document.getElementById('fechaDia').value);
+          mes  = parseInt(document.getElementById('fechaMes').value);
+          año  = parseInt(document.getElementById('fechaAnio').value);
+          if (!año || año < 2000) { alert('Por favor ingresa un año válido.'); return; }
+        } else {
+          const hoy = new Date();
+          dia = hoy.getDate(); mes = hoy.getMonth()+1; año = hoy.getFullYear();
+        }
+
+        const g = id => parseInt(document.getElementById(id).value) || 0;
+        const foto10x15Cant = g('foto10x15');
+        const foto10x15Val = foto10x15Cant >= 3
+          ? Math.floor(foto10x15Cant/3)*1200 + (foto10x15Cant%3)*600
+          : foto10x15Cant * 600;
+
+        const venta = {
+          fecha: `${dia}/${mes}/${año}`,
+          dia, mes, año,
+          total: total,
+          metodoPago: metodoPago,
+          montoPagado: metodoPago === 'efectivo' ? (parseInt(document.getElementById('pago').value)||0) : 0,
+          vuelto: metodoPago === 'efectivo' ? Math.max(0, (parseInt(document.getElementById('pago').value)||0) - total) : 0,
+          impBN:          g('impBN') * 150,
+          impColorTexto:  g('impColorTexto') * 300,
+          impColorPeq:    g('impColorPeq') * 400,
+          impColorMed:    g('impColorMed') * 500,
+          impColorHoja:   g('impColorHoja') * 700,
+          foto10x15:      foto10x15Val,
+          foto13x18:      g('foto13x18') * 1500,
+          foto21x30:      g('foto21x30') * 2500,
+          fotocopiaBN:    g('fotocopiaBN') * 400,
+          fotocopiaColor: g('fotocopiaColor') * 500,
+          plasticoPeq:    g('plasticoPeq') * 500,
+          plasticoMed:    g('plasticoMed') * 600,
+          plasticoGrande: g('plasticoGrande') * 1000,
+          llaveros:       g('llaveros') * 2500,
+          servicioPersonalizado: document.getElementById('servicioNombre').value,
+          subtotalPersonalizado: subtotalPersonalizado
+        };
+        let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
+        historial.push(venta);
+        localStorage.setItem('historialVentas', JSON.stringify(historial));
+
+        const fechaTexto = esManual ? `${dia}/${mes}/${año}` : 'hoy';
+        alert(`Venta guardada correctamente (${fechaTexto})`);
+      };
+
+      const eliminarVenta = (index) => {
+        let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
+        historial.splice(index, 1);
+        localStorage.setItem('historialVentas', JSON.stringify(historial));
+        mostrarHistorial();
+      };
+
+      const fmt = (n) => '$' + n.toLocaleString('es-CL');
+
+      const exportarExcel = () => {
+        const historial = JSON.parse(localStorage.getItem('historialVentas')) || [];
+        if (historial.length === 0) {
+          alert('No hay ventas registradas para exportar.');
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // --- Hoja 1: Detalle de todas las ventas ---
+        const encabezado = [
+          'Fecha', 'Día', 'Mes', 'Año', 'Método de pago', 'Total ($)', 'Monto pagado ($)', 'Vuelto ($)',
+          'Imp. Blanco y Negro ($)', 'Imp. Color Texto ($)', 'Imp. Color Img. Pequeña ($)',
+          'Imp. Color Img. Mediana ($)', 'Imp. Color Hoja Completa ($)',
+          'Foto 10x15 cm ($)', 'Foto 13x18 cm ($)', 'Foto 21x30 cm ($)',
+          'Fotocopia B/N ($)', 'Fotocopia Color ($)',
+          'Plastificado Pequeño ($)', 'Plastificado Mediano ($)', 'Plastificado Grande ($)',
+          'Llaveros ($)', 'Servicio Personalizado', 'Subtotal Pers. ($)'
+        ];
+
+        const filas = historial.map(v => [
+          v.fecha,
+          v.dia,
+          MESES[v.mes] || v.mes,
+          v.año,
+          v.metodoPago === 'transferencia' ? 'Transferencia' : 'Efectivo',
+          v.total,
+          v.montoPagado || 0,
+          v.vuelto || 0,
+          v.impBN || 0,
+          v.impColorTexto || 0,
+          v.impColorPeq || 0,
+          v.impColorMed || 0,
+          v.impColorHoja || 0,
+          v.foto10x15 || 0,
+          v.foto13x18 || 0,
+          v.foto21x30 || 0,
+          v.fotocopiaBN || 0,
+          v.fotocopiaColor || 0,
+          v.plasticoPeq || 0,
+          v.plasticoMed || 0,
+          v.plasticoGrande || 0,
+          v.llaveros || 0,
+          v.servicioPersonalizado || '',
+          v.subtotalPersonalizado || 0
+        ]);
+
+        const wsDetalle = XLSX.utils.aoa_to_sheet([encabezado, ...filas]);
+
+        // Ancho de columnas
+        wsDetalle['!cols'] = [
+          {wch:12},{wch:6},{wch:12},{wch:6},{wch:16},{wch:12},
+          {wch:22},{wch:20},{wch:26},{wch:26},{wch:28},
+          {wch:16},{wch:16},{wch:16},{wch:16},{wch:16},
+          {wch:22},{wch:22},{wch:22},{wch:14},{wch:24},{wch:18}
+        ];
+
+        XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle ventas');
+
+        // --- Hoja 2: Resumen por día ---
+        const porDia = {};
+        historial.forEach(v => {
+          if (!porDia[v.fecha]) porDia[v.fecha] = { dia:v.dia, mes:v.mes, año:v.año, total:0, count:0, efectivo:0, transferencia:0 };
+          porDia[v.fecha].total += v.total;
+          porDia[v.fecha].count++;
+          if (v.metodoPago === 'transferencia') porDia[v.fecha].transferencia += v.total;
+          else porDia[v.fecha].efectivo += v.total;
+        });
+        const encDia = ['Fecha','N° Ventas','Total ($)','Efectivo ($)','Transferencia ($)'];
+        const filasDia = Object.entries(porDia)
+          .sort((a,b) => new Date(a[1].año,a[1].mes-1,a[1].dia) - new Date(b[1].año,b[1].mes-1,b[1].dia))
+          .map(([fecha, d]) => [fecha, d.count, d.total, d.efectivo, d.transferencia]);
+        const wsDia = XLSX.utils.aoa_to_sheet([encDia, ...filasDia]);
+        wsDia['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:14},{wch:18}];
+        XLSX.utils.book_append_sheet(wb, wsDia, 'Resumen por día');
+
+        // --- Hoja 3: Resumen por mes ---
+        const porMes = {};
+        historial.forEach(v => {
+          const key = `${v.año}-${String(v.mes).padStart(2,'0')}`;
+          if (!porMes[key]) porMes[key] = { mes:v.mes, año:v.año, total:0, count:0, efectivo:0, transferencia:0 };
+          porMes[key].total += v.total;
+          porMes[key].count++;
+          if (v.metodoPago === 'transferencia') porMes[key].transferencia += v.total;
+          else porMes[key].efectivo += v.total;
+        });
+        const encMes = ['Mes','Año','N° Ventas','Total ($)','Efectivo ($)','Transferencia ($)'];
+        const filasMes = Object.entries(porMes)
+          .sort((a,b) => a[0].localeCompare(b[0]))
+          .map(([, m]) => [MESES[m.mes], m.año, m.count, m.total, m.efectivo, m.transferencia]);
+        const wsMes = XLSX.utils.aoa_to_sheet([encMes, ...filasMes]);
+        wsMes['!cols'] = [{wch:14},{wch:6},{wch:12},{wch:14},{wch:14},{wch:18}];
+        XLSX.utils.book_append_sheet(wb, wsMes, 'Resumen por mes');
+
+        // Descargar
+        const fecha = new Date();
+        const nombreArchivo = `ventas_${fecha.getDate()}-${fecha.getMonth()+1}-${fecha.getFullYear()}.xlsx`;
+        XLSX.writeFile(wb, nombreArchivo);
+      };
+
+      const mostrarHistorial = () => {
+        let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
+        const diaSel = document.getElementById('selectDia')?.value||'';
+        const mesSel = document.getElementById('selectMes')?.value||'';
+        const anioSel = document.getElementById('inputAnio')?.value||'';
+
+        const filtrado = historial.filter(v => {
+          if (diaSel && v.dia.toString() !== diaSel) return false;
+          if (mesSel && v.mes.toString() !== mesSel) return false;
+          if (anioSel && v.año.toString() !== anioSel) return false;
+          return true;
+        });
+
+        // --- Tarjetas resumen ---
+        const totalGeneral = filtrado.reduce((s, v) => s+v.total, 0);
+        const promedio = filtrado.length ? Math.round(totalGeneral / filtrado.length) : 0;
+        const maxVenta = filtrado.length ? Math.max(...filtrado.map(v=>v.total)) : 0;
+        const totalEfectivo = filtrado.filter(v => (v.metodoPago||'efectivo')==='efectivo').reduce((s,v)=>s+v.total,0);
+        const totalTransferencia = filtrado.filter(v => v.metodoPago==='transferencia').reduce((s,v)=>s+v.total,0);
+
+        const labelPeriodo = diaSel && mesSel && anioSel ? `${diaSel}/${MESES[parseInt(mesSel)]}/${anioSel}`
+          : mesSel && anioSel ? `${MESES[parseInt(mesSel)]} ${anioSel}`
+          : mesSel ? MESES[parseInt(mesSel)]
+          : anioSel ? anioSel
+          : 'todo el período';
+
+        document.getElementById('statsContainer').innerHTML = `
+          <div class="stat-card verde">
+            <div class="stat-label">Total recaudado</div>
+            <div class="stat-value">${fmt(totalGeneral)}</div>
+            <div class="stat-sub">${labelPeriodo}</div>
+          </div>
+          <div class="stat-card azul">
+            <div class="stat-label">Número de ventas</div>
+            <div class="stat-value">${filtrado.length}</div>
+            <div class="stat-sub">transacciones</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Promedio por venta</div>
+            <div class="stat-value">${fmt(promedio)}</div>
+            <div class="stat-sub">por transacción</div>
+          </div>
+          <div class="stat-card naranja">
+            <div class="stat-label">Venta más alta</div>
+            <div class="stat-value">${fmt(maxVenta)}</div>
+            <div class="stat-sub">máximo registrado</div>
+          </div>
+          <div class="stat-card" style="border-left:4px solid #27ae60;">
+            <div class="stat-label">💵 Efectivo</div>
+            <div class="stat-value" style="color:#27ae60;">${fmt(totalEfectivo)}</div>
+            <div class="stat-sub">${filtrado.filter(v=>(v.metodoPago||'efectivo')==='efectivo').length} ventas</div>
+          </div>
+          <div class="stat-card" style="border-left:4px solid #2980b9;">
+            <div class="stat-label">🏦 Transferencia</div>
+            <div class="stat-value" style="color:#2980b9;">${fmt(totalTransferencia)}</div>
+            <div class="stat-sub">${filtrado.filter(v=>v.metodoPago==='transferencia').length} ventas</div>
+          </div>
+        `;
+
+        // --- Tabla totales por día ---
+        // Agrupar por fecha
+        const porDia = {};
+        filtrado.forEach(v => {
+          if (!porDia[v.fecha]) porDia[v.fecha] = { total: 0, count: 0, dia: v.dia, mes: v.mes, año: v.año };
+          porDia[v.fecha].total += v.total;
+          porDia[v.fecha].count++;
+        });
+        const diasOrdenados = Object.entries(porDia).sort((a,b)=>{
+          const fa = new Date(a[1].año, a[1].mes-1, a[1].dia);
+          const fb = new Date(b[1].año, b[1].mes-1, b[1].dia);
+          return fa - fb;
+        });
+
+        const tablaDiasWrap = document.getElementById('tablaDiasWrap');
+        const tablaDiasBody = document.getElementById('tablaDiasBody');
+        if (diasOrdenados.length > 0) {
+          tablaDiasWrap.style.display = 'block';
+          document.getElementById('tablaDiasTitulo').textContent =
+            mesSel ? `Total por día — ${MESES[parseInt(mesSel)]}${anioSel?' '+anioSel:''}` : 'Total de ventas por día';
+          let rowsDia = diasOrdenados.map(([fecha, d]) =>
+            `<tr><td>${fecha}</td><td>${d.count}</td><td><strong>${fmt(d.total)}</strong></td></tr>`
+          ).join('');
+          if (diasOrdenados.length > 1) {
+            rowsDia += `<tr class="total-row"><td>TOTAL</td><td>${filtrado.length}</td><td>${fmt(totalGeneral)}</td></tr>`;
+          }
+          tablaDiasBody.innerHTML = rowsDia;
+        } else {
+          tablaDiasWrap.style.display = 'none';
+        }
+
+        // --- Tabla totales por mes (solo cuando no hay filtro de mes específico) ---
+        const tablaMesesWrap = document.getElementById('tablaMesesWrap');
+        if (!mesSel && filtrado.length > 0) {
+          const porMes = {};
+          filtrado.forEach(v => {
+            const key = `${v.año}-${String(v.mes).padStart(2,'0')}`;
+            if (!porMes[key]) porMes[key] = { total: 0, count: 0, mes: v.mes, año: v.año };
+            porMes[key].total += v.total;
+            porMes[key].count++;
+          });
+          const mesesOrdenados = Object.entries(porMes).sort((a,b)=>a[0].localeCompare(b[0]));
+
+          tablaMesesWrap.style.display = 'block';
+          document.getElementById('tablaMesesTitulo').textContent =
+            anioSel ? `Total por mes — ${anioSel}` : 'Total de ventas por mes';
+          let rowsMes = mesesOrdenados.map(([, m]) =>
+            `<tr><td>${MESES[m.mes]} ${m.año}</td><td>${m.count}</td><td><strong>${fmt(m.total)}</strong></td></tr>`
+          ).join('');
+          if (mesesOrdenados.length > 1) {
+            rowsMes += `<tr class="total-row"><td>TOTAL</td><td>${filtrado.length}</td><td>${fmt(totalGeneral)}</td></tr>`;
+          }
+          document.getElementById('tablaMesesBody').innerHTML = rowsMes;
+        } else {
+          tablaMesesWrap.style.display = 'none';
+        }
+
+        // --- Historial individual ---
+        let contenido = '';
+        if (filtrado.length === 0) {
+          contenido = '<p class="sin-registros">No hay registros para la fecha seleccionada.</p>';
+        } else {
+          filtrado.forEach((v, i) => {
+            const metodo = v.metodoPago || 'efectivo';
+            const badge = metodo === 'transferencia'
+              ? `<span style="background:#d6eaf8;color:#1a5276;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Transferencia</span>`
+              : `<span style="background:#d5f5e3;color:#145a32;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Efectivo</span>`;
+            // Detectar si es venta retroactiva (no fue guardada hoy)
+            const hoy = new Date(); const hoyStr = `${hoy.getDate()}/${hoy.getMonth()+1}/${hoy.getFullYear()}`;
+            const badgeRetro = v.fecha !== hoyStr
+              ? `<span style="background:#fdebd0;color:#784212;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">📅 Fecha anterior</span>`
+              : '';
+            let texto = `<span>${v.fecha} — Total: <strong>${fmt(v.total)}</strong>`;
+            if (metodo === 'efectivo' && v.montoPagado) {
+              texto += ` | Pagó: <strong>${fmt(v.montoPagado)}</strong> | Vuelto: <strong style="color:#27ae60;">${fmt(v.vuelto||0)}</strong>`;
+            }
+            texto += ` ${badge} ${badgeRetro}`;
+            if (v.servicioPersonalizado) texto += ` | ${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}`;
+            texto += `</span><button class="eliminar" onclick="eliminarVenta(${i})">Eliminar</button>`;
+            contenido += `<p>${texto}</p>`;
+          });
+        }
+        document.getElementById('historial').innerHTML = contenido;
+      };
+    </script>
+  </body>
+</html>
