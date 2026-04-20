@@ -370,7 +370,9 @@
       };
 
       const eliminarVenta = (index) => {
+        if (!confirm('¿Estás seguro de eliminar esta venta? Esta acción no se puede deshacer.')) return;
         let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
+        if (index < 0 || index >= historial.length) { alert('No se pudo eliminar la venta.'); return; }
         historial.splice(index, 1);
         localStorage.setItem('historialVentas', JSON.stringify(historial));
         mostrarHistorial();
@@ -600,6 +602,7 @@
           contenido = '<p class="sin-registros">No hay registros para la fecha seleccionada.</p>';
         } else {
           filtrado.forEach((v, i) => {
+            const originalIndex = historial.indexOf(v);
             const metodo = v.metodoPago || 'efectivo';
             const badge = metodo === 'transferencia'
               ? `<span style="background:#d6eaf8;color:#1a5276;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Transferencia</span>`
@@ -615,7 +618,7 @@
             }
             texto += ` ${badge} ${badgeRetro}`;
             if (v.servicioPersonalizado) texto += ` | ${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}`;
-            texto += `</span><button class="eliminar" onclick="eliminarVenta(${i})">Eliminar</button>`;
+            texto += `</span><button type="button" class="eliminar" onclick="eliminarVenta(${originalIndex})">Eliminar</button>`;
             contenido += `<p>${texto}</p>`;
           });
         }
