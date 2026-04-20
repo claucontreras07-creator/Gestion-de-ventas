@@ -370,6 +370,7 @@
       };
 
       const eliminarVenta = (index) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar esta venta? Esta acción no se puede deshacer.')) return;
         let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
         historial.splice(index, 1);
         localStorage.setItem('historialVentas', JSON.stringify(historial));
@@ -484,12 +485,14 @@
         const mesSel = document.getElementById('selectMes')?.value||'';
         const anioSel = document.getElementById('inputAnio')?.value||'';
 
-        const filtrado = historial.filter(v => {
-          if (diaSel && v.dia.toString() !== diaSel) return false;
-          if (mesSel && v.mes.toString() !== mesSel) return false;
-          if (anioSel && v.año.toString() !== anioSel) return false;
-          return true;
-        });
+        const filtrado = historial
+          .map((v, idx) => ({ ...v, __idx: idx }))
+          .filter(v => {
+            if (diaSel && v.dia.toString() !== diaSel) return false;
+            if (mesSel && v.mes.toString() !== mesSel) return false;
+            if (anioSel && v.año.toString() !== anioSel) return false;
+            return true;
+          });
 
         // --- Tarjetas resumen ---
         const totalGeneral = filtrado.reduce((s, v) => s+v.total, 0);
@@ -615,7 +618,7 @@
             }
             texto += ` ${badge} ${badgeRetro}`;
             if (v.servicioPersonalizado) texto += ` | ${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}`;
-            texto += `</span><button class="eliminar" onclick="eliminarVenta(${i})">Eliminar</button>`;
+            texto += `</span><button class="eliminar" onclick="eliminarVenta(${v.__idx})">Eliminar</button>`;
             contenido += `<p>${texto}</p>`;
           });
         }
