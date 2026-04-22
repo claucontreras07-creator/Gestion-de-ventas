@@ -154,9 +154,18 @@
     <div id="diarios" style="display:none">
       <h1>Registros Diarios</h1>
 
-      <button type="button" class="exportar-excel" onclick="exportarExcel()">
-        ⬇ Exportar a Excel
-      </button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <button type="button" class="exportar-excel" style="margin-bottom:0;" onclick="exportarExcel()">
+          ⬇ Exportar a Excel
+        </button>
+        <button type="button" class="exportar-excel" style="margin-bottom:0;background:#6c3483;" onclick="document.getElementById('inputImportar').click()">
+          ⬆ Importar ventas
+        </button>
+        <button type="button" class="exportar-excel" style="margin-bottom:0;background:#117a65;" onclick="exportarJSON()">
+          💾 Exportar respaldo (JSON)
+        </button>
+        <input type="file" id="inputImportar" accept=".json,.xlsx" style="display:none;" onchange="importarVentas(event)"/>
+      </div>
 
       <div class="filtros-fecha">
         <div>
@@ -476,6 +485,122 @@
         const fecha = new Date();
         const nombreArchivo = `ventas_${fecha.getDate()}-${fecha.getMonth()+1}-${fecha.getFullYear()}.xlsx`;
         XLSX.writeFile(wb, nombreArchivo);
+      };
+
+      // ── Exportar respaldo JSON ──────────────────────────────────────────
+      const exportarJSON = () => {
+        const historial = JSON.parse(localStorage.getItem('historialVentas')) || [];
+        if (historial.length === 0) { alert('No hay ventas registradas para exportar.'); return; }
+        const blob = new Blob([JSON.stringify(historial, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        const fecha = new Date();
+        a.href = URL.createObjectURL(blob);
+        a.download = `respaldo_ventas_${fecha.getDate()}-${fecha.getMonth()+1}-${fecha.getFullYear()}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+
+      // ── Importar ventas (JSON o Excel) ─────────────────────────────────
+      const importarVentas = (event) => {
+        const file = event.target.files[0];
+        event.target.value = '';
+        if (!file) return;
+
+        const ext = file.name.split('.').pop().toLowerCase();
+
+        if (ext === 'json') {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const datos = JSON.parse(e.target.result);
+              if (!Array.isArray(datos)) { alert('El archivo JSON no tiene el formato correcto.'); return; }
+              procesarImportacion(datos);
+            } catch {
+              alert('Error al leer el archivo JSON. Asegúrate de que sea un respaldo válido.');
+            }
+          };
+          reader.readAsText(file);
+
+        } else if (ext === 'xlsx' || ext === 'xls') {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const wb = XLSX.read(e.target.result, { type: 'array' });
+              const ws = wb.Sheets['Detalle ventas'];
+              if (!ws) { alert('No se encontró la hoja "Detalle ventas" en el Excel.\nAsegúrate de usar un archivo exportado por este sistema.'); return; }
+              const filas = XLSX.utils.sheet_to_json(ws, { header: 1 });
+              if (filas.length < 2) { alert('El archivo no contiene ventas.'); return; }
+              const datos = [];
+              for (let i = 1; i < filas.length; i++) {
+                const f = filas[i];
+                if (!f[0]) continue;
+                const mesNum = MESES.indexOf(f[2]);
+                datos.push({
+                  fecha:    String(f[0]),
+                  dia:      parseInt(f[1]) || 0,
+                  mes:      mesNum > 0 ? mesNum : (parseInt(f[2]) || 0),
+                  año:      parseInt(f[3]) || 0,
+                  metodoPago: (String(f[4]||'').toLowerCase() === 'transferencia') ? 'transferencia' : 'efectivo',
+                  total:    parseFloat(f[5]) || 0,
+                  montoPagado: parseFloat(f[6]) || 0,
+                  vuelto:   parseFloat(f[7]) || 0,
+                  impBN:          parseFloat(f[8])  || 0,
+                  impColorTexto:  parseFloat(f[9])  || 0,
+                  impColorPeq:    parseFloat(f[10]) || 0,
+                  impColorMed:    parseFloat(f[11]) || 0,
+                  impColorHoja:   parseFloat(f[12]) || 0,
+                  foto10x15:      parseFloat(f[13]) || 0,
+                  foto13x18:      parseFloat(f[14]) || 0,
+                  foto21x30:      parseFloat(f[15]) || 0,
+                  fotocopiaBN:    parseFloat(f[16]) || 0,
+                  fotocopiaColor: parseFloat(f[17]) || 0,
+                  plasticoPeq:    parseFloat(f[18]) || 0,
+                  plasticoMed:    parseFloat(f[19]) || 0,
+                  plasticoGrande: parseFloat(f[20]) || 0,
+                  llaveros:       parseFloat(f[21]) || 0,
+                  servicioPersonalizado: String(f[22] || ''),
+                  subtotalPersonalizado: parseFloat(f[23]) || 0
+                });
+              }
+              procesarImportacion(datos);
+            } catch (err) {
+              alert('Error al leer el archivo Excel: ' + err.message);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        } else {
+          alert('Formato no soportado. Usa un archivo .json o .xlsx exportado por este sistema.');
+        }
+      };
+
+      const procesarImportacion = (nuevasVentas) => {
+        if (nuevasVentas.length === 0) { alert('El archivo no contiene ventas válidas.'); return; }
+        const historialActual = JSON.parse(localStorage.getItem('historialVentas')) || [];
+        const existentes = new Set(historialActual.map(v => `${v.fecha}|${v.total}|${v.metodoPago||'efectivo'}`));
+        const noRepetidas = nuevasVentas.filter(v => !existentes.has(`${v.fecha}|${v.total}|${v.metodoPago||'efectivo'}`));
+        const duplicadas  = nuevasVentas.length - noRepetidas.length;
+
+        if (noRepetidas.length === 0) {
+          alert(`No se importó ninguna venta.\nTodas las ${duplicadas} ventas ya existían en el sistema.`);
+          return;
+        }
+
+        const totalActual = historialActual.length;
+        if (totalActual > 0) {
+          const confirmar = confirm(
+            `Se encontraron ${noRepetidas.length} venta(s) nueva(s)${duplicadas > 0 ? ` (${duplicadas} duplicada(s) ignorada(s))` : ''}.\n\n` +
+            `Actualmente tienes ${totalActual} venta(s) guardada(s).\n\n` +
+            `¿Deseas AGREGAR las nuevas ventas a las existentes?\n\n` +
+            `• Aceptar → Agregar (total: ${totalActual + noRepetidas.length} ventas)\n` +
+            `• Cancelar → No importar`
+          );
+          if (!confirmar) return;
+        }
+
+        const historialFinal = [...historialActual, ...noRepetidas];
+        localStorage.setItem('historialVentas', JSON.stringify(historialFinal));
+        alert(`✅ Importación exitosa.\n${noRepetidas.length} venta(s) importada(s)${duplicadas > 0 ? `\n${duplicadas} duplicada(s) ignorada(s)` : ''}.\nTotal en sistema: ${historialFinal.length} ventas.`);
+        mostrarHistorial();
       };
 
       const mostrarHistorial = () => {
