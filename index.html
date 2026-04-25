@@ -729,19 +729,34 @@
             const badge = metodo === 'transferencia'
               ? `<span style="background:#d6eaf8;color:#1a5276;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Transferencia</span>`
               : `<span style="background:#d5f5e3;color:#145a32;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">Efectivo</span>`;
-            // Detectar si es venta retroactiva (no fue guardada hoy)
-            const hoy = new Date(); const hoyStr = `${hoy.getDate()}/${hoy.getMonth()+1}/${hoy.getFullYear()}`;
-            const badgeRetro = v.fecha !== hoyStr
-              ? `<span style="background:#fdebd0;color:#784212;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">📅 Fecha anterior</span>`
-              : '';
-            let texto = `<span>${v.fecha} — Total: <strong>${fmt(v.total)}</strong>`;
+
+            // Construir detalle de servicios realizados
+            const serviciosNombres = [
+              ['impBN','Imp. B/N'],['impColorTexto','Imp. Color Texto'],['impColorPeq','Imp. Color Peq.'],
+              ['impColorMed','Imp. Color Med.'],['impColorHoja','Imp. Color Hoja'],['foto10x15','Foto 10x15'],
+              ['foto13x18','Foto 13x18'],['foto21x30','Foto 21x30'],['fotocopiaBN','Fotocopia B/N'],
+              ['fotocopiaColor','Fotocopia Color'],['plasticoPeq','Plastificado Peq.'],
+              ['plasticoMed','Plastificado Med.'],['plasticoGrande','Plastificado Grande'],['llaveros','Llaveros']
+            ];
+            const serviciosRealizados = serviciosNombres
+              .filter(([key]) => v[key] && v[key] > 0)
+              .map(([key, nombre]) => `${nombre}: ${fmt(v[key])}`)
+              .join(' · ');
+
+            let texto = `<span style="display:flex;flex-direction:column;gap:3px;flex:1;">`;
+            texto += `<span>${v.fecha} — Total: <strong>${fmt(v.total)}</strong>`;
             if (metodo === 'efectivo' && v.montoPagado) {
               texto += ` | Pagó: <strong>${fmt(v.montoPagado)}</strong> | Vuelto: <strong style="color:#27ae60;">${fmt(v.vuelto||0)}</strong>`;
             }
-            texto += ` ${badge} ${badgeRetro}`;
-            if (v.servicioPersonalizado) texto += ` | ${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}`;
+            texto += ` ${badge}</span>`;
+            if (serviciosRealizados) {
+              texto += `<span style="font-size:12px;color:#555;">${serviciosRealizados}</span>`;
+            }
+            if (v.servicioPersonalizado && v.subtotalPersonalizado > 0) {
+              texto += `<span style="font-size:12px;color:#555;">${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}</span>`;
+            }
             texto += `</span><button class="eliminar" onclick="eliminarVenta(${v._realIndex})">Eliminar</button>`;
-            contenido += `<p>${texto}</p>`;
+            contenido += `<p style="align-items:flex-start;">${texto}</p>`;
           });
         }
         document.getElementById('historial').innerHTML = contenido;
