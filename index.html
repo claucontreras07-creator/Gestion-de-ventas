@@ -90,6 +90,7 @@
         <div><label>Plastificado Mediano ($600):</label><input type="number" id="plasticoMed" min="0" value="0" oninput="actualizar()"/><span id="sub_plasticoMed">$0</span></div>
         <div><label>Plastificado Grande ($1000):</label><input type="number" id="plasticoGrande" min="0" value="0" oninput="actualizar()"/><span id="sub_plasticoGrande">$0</span></div>
         <div><label>Llaveros ($2500 c/u):</label><input type="number" id="llaveros" min="0" value="0" oninput="actualizar()"/><span id="sub_llaveros">$0</span></div>
+        <div><label>Tarjetas Día Especial ($800 c/u o 2x$1.500):</label><input type="number" id="tarjetaDiaEspecial" min="0" value="0" oninput="actualizar()"/><span id="sub_tarjetaDiaEspecial">$0</span></div>
         <h3>Servicio Personalizado</h3>
         <div><label>Nombre del servicio:</label><input type="text" id="servicioNombre"/></div>
         <div><label>Cantidad:</label><input type="number" id="servicioCantidad" min="0" value="0" oninput="actualizarPersonalizado()"/></div>
@@ -335,7 +336,10 @@
         document.getElementById('sub_plasticoGrande').innerText = '$'+plasticoGrande;
         const llaveros = (parseInt(document.getElementById('llaveros').value)||0)*2500;
         document.getElementById('sub_llaveros').innerText = '$'+llaveros;
-        total = impBN+impColorTexto+impColorPeq+impColorMed+impColorHoja+foto10x15+foto13x18+foto21x30+fotocopiaBN+fotocopiaColor+plasticoPeq+plasticoMed+plasticoGrande+llaveros+subtotalPersonalizado;
+        const tarjetaDiaEspecialCant = parseInt(document.getElementById('tarjetaDiaEspecial').value)||0;
+        const tarjetaDiaEspecial = Math.floor(tarjetaDiaEspecialCant/2)*1500 + (tarjetaDiaEspecialCant%2)*800;
+        document.getElementById('sub_tarjetaDiaEspecial').innerText = '$'+tarjetaDiaEspecial;
+        total = impBN+impColorTexto+impColorPeq+impColorMed+impColorHoja+foto10x15+foto13x18+foto21x30+fotocopiaBN+fotocopiaColor+plasticoPeq+plasticoMed+plasticoGrande+llaveros+tarjetaDiaEspecial+subtotalPersonalizado;
         document.getElementById('resultado').innerText = 'Total a pagar: $'+total;
         actualizarVuelto();
       };
@@ -429,6 +433,7 @@
           plasticoMed:    g('plasticoMed') * 600,
           plasticoGrande: g('plasticoGrande') * 1000,
           llaveros:       g('llaveros') * 2500,
+          tarjetaDiaEspecial: (() => { const c = g('tarjetaDiaEspecial'); return Math.floor(c/2)*1500+(c%2)*800; })(),
           servicioPersonalizado: document.getElementById('servicioNombre').value,
           subtotalPersonalizado: subtotalPersonalizado
         };
@@ -491,7 +496,7 @@
           'Foto 10x15 cm ($)', 'Foto 13x18 cm ($)', 'Foto 21x30 cm ($)',
           'Fotocopia B/N ($)', 'Fotocopia Color ($)',
           'Plastificado Pequeño ($)', 'Plastificado Mediano ($)', 'Plastificado Grande ($)',
-          'Llaveros ($)', 'Servicio Personalizado', 'Subtotal Pers. ($)'
+          'Llaveros ($)', 'Tarjeta Día Especial ($)', 'Servicio Personalizado', 'Subtotal Pers. ($)'
         ];
 
         const filas = historial.map(v => [
@@ -517,6 +522,7 @@
           v.plasticoMed || 0,
           v.plasticoGrande || 0,
           v.llaveros || 0,
+          v.tarjetaDiaEspecial || 0,
           v.servicioPersonalizado || '',
           v.subtotalPersonalizado || 0
         ]);
@@ -848,7 +854,8 @@
               ['impColorMed','Imp. Color Med.'],['impColorHoja','Imp. Color Hoja'],['foto10x15','Foto 10x15'],
               ['foto13x18','Foto 13x18'],['foto21x30','Foto 21x30'],['fotocopiaBN','Fotocopia B/N'],
               ['fotocopiaColor','Fotocopia Color'],['plasticoPeq','Plastificado Peq.'],
-              ['plasticoMed','Plastificado Med.'],['plasticoGrande','Plastificado Grande'],['llaveros','Llaveros']
+              ['plasticoMed','Plastificado Med.'],['plasticoGrande','Plastificado Grande'],['llaveros','Llaveros'],
+              ['tarjetaDiaEspecial','Tarjeta Día Especial']
             ];
             const serviciosRealizados = serviciosNombres
               .filter(([key]) => v[key] && v[key] > 0)
