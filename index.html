@@ -115,7 +115,7 @@
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
             <input type="text" id="servicioNombre" placeholder="Nombre del servicio" style="width:200px;"/>
             <input type="number" id="servicioCantidad" min="0" value="1" placeholder="Cant." style="width:65px;" />
-            <input type="number" id="servicioValor" min="0" value="0" placeholder="Valor $" style="width:90px;" />
+            <input type="number" id="servicioValor" min="0" placeholder="Valor $" style="width:90px;" />
             <button type="button" onclick="agregarServicioPersonalizado()" style="background:#2980b9;color:white;padding:7px 16px;border-radius:6px;font-size:14px;font-weight:600;">＋ Agregar</button>
           </div>
           <div id="listaServiciosPersonalizados" style="display:flex;flex-direction:column;gap:6px;"></div>
@@ -517,6 +517,7 @@
 
         const fechaTexto = esManual ? `${dia}/${mes}/${año}` : 'hoy';
         alert(`Venta guardada correctamente (${fechaTexto})`);
+        location.reload();
       };
 
       const eliminarVenta = (index) => {
