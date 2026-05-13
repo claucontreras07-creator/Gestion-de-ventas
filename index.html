@@ -111,10 +111,16 @@
         <div><label>Llaveros ($2500 c/u):</label><input type="number" id="llaveros" min="0" value="0" oninput="actualizar()"/><span id="sub_llaveros">$0</span></div>
         <div><label>Tarjetas Día Especial ($800 c/u o 2x$1.500):</label><input type="number" id="tarjetaDiaEspecial" min="0" value="0" oninput="actualizar()"/><span id="sub_tarjetaDiaEspecial">$0</span></div>
         <h3>Servicio Personalizado</h3>
-        <div><label>Nombre del servicio:</label><input type="text" id="servicioNombre"/></div>
-        <div><label>Cantidad:</label><input type="number" id="servicioCantidad" min="0" value="0" oninput="actualizarPersonalizado()"/></div>
-        <div><label>Valor unitario ($):</label><input type="number" id="servicioValor" min="0" value="0" oninput="actualizarPersonalizado()"/></div>
-        <div><span id="sub_servicioPersonalizado">$0</span></div>
+        <div style="background:#f0f7ff;border:1px solid #c5dff8;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+            <input type="text" id="servicioNombre" placeholder="Nombre del servicio" style="width:200px;"/>
+            <input type="number" id="servicioCantidad" min="0" value="1" placeholder="Cant." style="width:65px;" />
+            <input type="number" id="servicioValor" min="0" value="0" placeholder="Valor $" style="width:90px;" />
+            <button type="button" onclick="agregarServicioPersonalizado()" style="background:#2980b9;color:white;padding:7px 16px;border-radius:6px;font-size:14px;font-weight:600;">＋ Agregar</button>
+          </div>
+          <div id="listaServiciosPersonalizados" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <div id="sub_servicioPersonalizado" style="font-weight:600;color:#1a5276;margin-top:6px;font-size:14px;display:none;">Subtotal servicios personalizados: $0</div>
+        </div>
         <div id="resultado">Total a pagar: $0</div>
 
         <!-- Fecha de la venta -->
@@ -301,6 +307,7 @@
 
       let total = 0;
       let subtotalPersonalizado = 0;
+      let serviciosPersonalizados = []; // [{nombre, cantidad, valor, subtotal}]
 
       const cambiarTipoFecha = () => {
         const esManual = document.getElementById('fechaManual').checked;
@@ -368,12 +375,49 @@
         actualizarVuelto();
       };
 
-      const actualizarPersonalizado = () => {
+      const agregarServicioPersonalizado = () => {
+        const nombre = document.getElementById('servicioNombre').value.trim();
         const cantidad = parseInt(document.getElementById('servicioCantidad').value)||0;
         const valor = parseInt(document.getElementById('servicioValor').value)||0;
-        subtotalPersonalizado = cantidad*valor;
-        document.getElementById('sub_servicioPersonalizado').innerText = '$'+subtotalPersonalizado;
+        if (!nombre) { alert('Por favor ingresa el nombre del servicio.'); document.getElementById('servicioNombre').focus(); return; }
+        if (cantidad <= 0 || valor <= 0) { alert('Ingresa una cantidad y valor válidos (mayor a 0).'); return; }
+        const subtotal = cantidad * valor;
+        serviciosPersonalizados.push({ nombre, cantidad, valor, subtotal });
+        // Limpiar campos
+        document.getElementById('servicioNombre').value = '';
+        document.getElementById('servicioCantidad').value = '1';
+        document.getElementById('servicioValor').value = '0';
+        renderizarServiciosPersonalizados();
         actualizar();
+      };
+
+      const eliminarServicioPersonalizado = (idx) => {
+        serviciosPersonalizados.splice(idx, 1);
+        renderizarServiciosPersonalizados();
+        actualizar();
+      };
+
+      const renderizarServiciosPersonalizados = () => {
+        const lista = document.getElementById('listaServiciosPersonalizados');
+        const subEl = document.getElementById('sub_servicioPersonalizado');
+        if (serviciosPersonalizados.length === 0) {
+          lista.innerHTML = '';
+          subEl.style.display = 'none';
+          return;
+        }
+        lista.innerHTML = serviciosPersonalizados.map((s, i) =>
+          `<div style="display:flex;justify-content:space-between;align-items:center;background:white;border:1px solid #d0e8f8;border-radius:6px;padding:6px 10px;font-size:13px;">
+            <span><strong>${s.nombre}</strong> — ${s.cantidad} × $${s.valor.toLocaleString('es-CL')} = <strong style="color:#1a5276;">$${s.subtotal.toLocaleString('es-CL')}</strong></span>
+            <button type="button" class="eliminar" onclick="eliminarServicioPersonalizado(${i})">✕</button>
+          </div>`
+        ).join('');
+        subtotalPersonalizado = serviciosPersonalizados.reduce((acc, s) => acc + s.subtotal, 0);
+        subEl.textContent = `Subtotal servicios personalizados: $${subtotalPersonalizado.toLocaleString('es-CL')}`;
+        subEl.style.display = 'block';
+      };
+
+      const actualizarPersonalizado = () => {
+        // Función legacy — ya no usada directamente
       };
 
       const cambiarMetodoPago = () => {
@@ -458,12 +502,18 @@
           plasticoGrande: g('plasticoGrande') * 1000,
           llaveros:       g('llaveros') * 2500,
           tarjetaDiaEspecial: (() => { const c = g('tarjetaDiaEspecial'); return Math.floor(c/2)*1500+(c%2)*800; })(),
-          servicioPersonalizado: document.getElementById('servicioNombre').value,
-          subtotalPersonalizado: subtotalPersonalizado
+          servicioPersonalizado: serviciosPersonalizados.length === 1 ? serviciosPersonalizados[0].nombre : (serviciosPersonalizados.length > 1 ? serviciosPersonalizados.map(s=>s.nombre).join(', ') : ''),
+          subtotalPersonalizado: subtotalPersonalizado,
+          serviciosPersonalizadosDetalle: serviciosPersonalizados.slice()
         };
         let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
         historial.push(venta);
         localStorage.setItem('historialVentas', JSON.stringify(historial));
+
+        // Resetear servicios personalizados
+        serviciosPersonalizados = [];
+        subtotalPersonalizado = 0;
+        renderizarServiciosPersonalizados();
 
         const fechaTexto = esManual ? `${dia}/${mes}/${año}` : 'hoy';
         alert(`Venta guardada correctamente (${fechaTexto})`);
@@ -898,7 +948,11 @@
             if (serviciosRealizados) {
               texto += `<span style="font-size:12px;color:#555;">${serviciosRealizados}</span>`;
             }
-            if (v.servicioPersonalizado && v.subtotalPersonalizado > 0) {
+            if (v.serviciosPersonalizadosDetalle && v.serviciosPersonalizadosDetalle.length > 0) {
+              v.serviciosPersonalizadosDetalle.forEach(s => {
+                texto += `<span style="font-size:12px;color:#555;">🔧 ${s.nombre} (${s.cantidad}×$${s.valor.toLocaleString('es-CL')}): $${s.subtotal.toLocaleString('es-CL')}</span>`;
+              });
+            } else if (v.servicioPersonalizado && v.subtotalPersonalizado > 0) {
               texto += `<span style="font-size:12px;color:#555;">${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}</span>`;
             }
             texto += `</span>`;
