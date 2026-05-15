@@ -787,11 +787,13 @@
           });
 
         // --- Tarjetas resumen ---
-        const totalGeneral = filtrado.reduce((s, v) => s+v.total, 0);
-        const promedio = filtrado.length ? Math.round(totalGeneral / filtrado.length) : 0;
-        const maxVenta = filtrado.length ? Math.max(...filtrado.map(v=>v.total)) : 0;
-        const totalEfectivo = filtrado.filter(v => (v.metodoPago||'efectivo')==='efectivo').reduce((s,v)=>s+v.total,0);
-        const totalTransferencia = filtrado.filter(v => v.metodoPago==='transferencia').reduce((s,v)=>s+v.total,0);
+        // Las ventas fiadas NO pagadas no suman al total hasta que se marquen como pagadas
+        const filtradoPagado = filtrado.filter(v => !(v.metodoPago === 'fiado' && !v.fiadoPagado));
+        const totalGeneral = filtradoPagado.reduce((s, v) => s+v.total, 0);
+        const promedio = filtradoPagado.length ? Math.round(totalGeneral / filtradoPagado.length) : 0;
+        const maxVenta = filtradoPagado.length ? Math.max(...filtradoPagado.map(v=>v.total)) : 0;
+        const totalEfectivo = filtradoPagado.filter(v => (v.metodoPago||'efectivo')==='efectivo').reduce((s,v)=>s+v.total,0);
+        const totalTransferencia = filtradoPagado.filter(v => v.metodoPago==='transferencia').reduce((s,v)=>s+v.total,0);
         const totalFiadoPendiente = filtrado.filter(v => v.metodoPago==='fiado' && !v.fiadoPagado).reduce((s,v)=>s+v.total,0);
         const totalFiadoPagado = filtrado.filter(v => v.metodoPago==='fiado' && v.fiadoPagado).reduce((s,v)=>s+v.total,0);
         // Suma fiados pagados con efectivo/transferencia para stats
@@ -812,8 +814,8 @@
           </div>
           <div class="stat-card azul">
             <div class="stat-label">Número de ventas</div>
-            <div class="stat-value">${filtrado.length}</div>
-            <div class="stat-sub">transacciones</div>
+            <div class="stat-value">${filtradoPagado.length}</div>
+            <div class="stat-sub">transacciones cobradas</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Promedio por venta</div>
@@ -844,9 +846,9 @@
         `;
 
         // --- Tabla totales por día ---
-        // Agrupar por fecha
+        // Agrupar por fecha (solo ventas cobradas, fiados pendientes no cuentan)
         const porDia = {};
-        filtrado.forEach(v => {
+        filtradoPagado.forEach(v => {
           if (!porDia[v.fecha]) porDia[v.fecha] = { total: 0, count: 0, dia: v.dia, mes: v.mes, año: v.año };
           porDia[v.fecha].total += v.total;
           porDia[v.fecha].count++;
@@ -867,7 +869,7 @@
             `<tr><td>${fecha}</td><td>${d.count}</td><td><strong>${fmt(d.total)}</strong></td></tr>`
           ).join('');
           if (diasOrdenados.length > 1) {
-            rowsDia += `<tr class="total-row"><td>TOTAL</td><td>${filtrado.length}</td><td>${fmt(totalGeneral)}</td></tr>`;
+            rowsDia += `<tr class="total-row"><td>TOTAL</td><td>${filtradoPagado.length}</td><td>${fmt(totalGeneral)}</td></tr>`;
           }
           tablaDiasBody.innerHTML = rowsDia;
         } else {
@@ -876,9 +878,9 @@
 
         // --- Tabla totales por mes (solo cuando no hay filtro de mes específico) ---
         const tablaMesesWrap = document.getElementById('tablaMesesWrap');
-        if (!mesSel && filtrado.length > 0) {
+        if (!mesSel && filtradoPagado.length > 0) {
           const porMes = {};
-          filtrado.forEach(v => {
+          filtradoPagado.forEach(v => {
             const key = `${v.año}-${String(v.mes).padStart(2,'0')}`;
             if (!porMes[key]) porMes[key] = { total: 0, count: 0, mes: v.mes, año: v.año };
             porMes[key].total += v.total;
@@ -893,7 +895,7 @@
             `<tr><td>${MESES[m.mes]} ${m.año}</td><td>${m.count}</td><td><strong>${fmt(m.total)}</strong></td></tr>`
           ).join('');
           if (mesesOrdenados.length > 1) {
-            rowsMes += `<tr class="total-row"><td>TOTAL</td><td>${filtrado.length}</td><td>${fmt(totalGeneral)}</td></tr>`;
+            rowsMes += `<tr class="total-row"><td>TOTAL</td><td>${filtradoPagado.length}</td><td>${fmt(totalGeneral)}</td></tr>`;
           }
           document.getElementById('tablaMesesBody').innerHTML = rowsMes;
         } else {
