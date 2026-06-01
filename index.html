@@ -517,7 +517,40 @@
 
         const fechaTexto = esManual ? `${dia}/${mes}/${año}` : 'hoy';
         alert(`Venta guardada correctamente (${fechaTexto})`);
-        location.reload();
+
+        // Resetear todos los campos del formulario sin recargar la página
+        const camposNum = ['impBN','impColorTexto','impColorPeq','impColorMed','impColorHoja',
+          'foto10x15','foto13x18','foto21x30','fotocopiaBN','fotocopiaColor',
+          'plasticoPeq','plasticoMed','plasticoGrande','llaveros','tarjetaDiaEspecial','pago'];
+        camposNum.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+
+        // Resetear subtotales a $0
+        const subIds = ['sub_impBN','sub_impColorTexto','sub_impColorPeq','sub_impColorMed','sub_impColorHoja',
+          'sub_foto10x15','sub_foto13x18','sub_foto21x30','sub_fotocopiaBN','sub_fotocopiaColor',
+          'sub_plasticoPeq','sub_plasticoMed','sub_plasticoGrande','sub_llaveros','sub_tarjetaDiaEspecial'];
+        subIds.forEach(id => { const el = document.getElementById(id); if(el) el.innerText = '$0'; });
+
+        // Resetear total y vuelto
+        total = 0;
+        document.getElementById('resultado').innerText = 'Total a pagar: $0';
+        document.getElementById('vuelto').innerText = '';
+
+        // Resetear método de pago a efectivo
+        document.getElementById('pagoEfectivo').checked = true;
+        cambiarMetodoPago();
+
+        // Resetear fecha a "hoy"
+        document.getElementById('fechaHoy').checked = true;
+        cambiarTipoFecha();
+
+        // Resetear campo fiado
+        const fiadoNombreEl = document.getElementById('fiadoNombre');
+        if (fiadoNombreEl) { fiadoNombreEl.value = ''; fiadoNombreEl.style.borderColor = '#e67e22'; }
+        const fiadoErrorEl = document.getElementById('fiadoNombreError');
+        if (fiadoErrorEl) fiadoErrorEl.style.display = 'none';
+
+        // Quedarse en la sección de registro de ventas
+        mostrarSeccion('ventas');
       };
 
       const eliminarVenta = (index) => {
