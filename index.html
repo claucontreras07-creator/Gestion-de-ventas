@@ -29,9 +29,12 @@
       h1 { margin-bottom: 16px; font-size: 22px; }
       h3 { margin: 16px 0 8px; font-size: 16px; }
       form div { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-      label { min-width: 280px; font-size: 14px; }
+      label { min-width: auto; font-size: 14px; }
       input[type="number"], input[type="text"] { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 80px; }
       input[type="text"] { width: 200px; }
+      /* Cada fila del catálogo ocupa su propia línea completa */
+      #listaServiciosCatalogo { display: flex; flex-direction: column; }
+      #listaServiciosCatalogo > div { display: flex; flex-direction: row; align-items: center; flex-wrap: nowrap; width: 100%; margin-bottom: 0; gap: 0; }
       #resultado { font-weight: bold; font-size: 18px; margin: 16px 0 8px; color: #2c3e50; }
       #vuelto { font-size: 15px; color: #27ae60; margin-bottom: 8px; }
       .filtros-fecha { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
@@ -92,35 +95,26 @@
       <div id="main-content">
 
     <!-- Sección Registro de Ventas -->
-    <div id="ventas" style="display:none">
-      <h1>Registro de Servicios</h1>
+    <div id="ventas" style="display:block">
+      <h1>Registro de Ventas</h1>
       <form id="formServicios">
-        <div><label>Impresiones Blanco y Negro ($200):</label><input type="number" id="impBN" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_impBN">$0</span></div>
-        <div><label>Impresiones Color - Texto ($300):</label><input type="number" id="impColorTexto" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_impColorTexto">$0</span></div>
-        <div><label>Impresiones Color - Imagen Pequeña ($400):</label><input type="number" id="impColorPeq" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_impColorPeq">$0</span></div>
-        <div><label>Impresiones Color - Imagen Mediana ($500):</label><input type="number" id="impColorMed" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_impColorMed">$0</span></div>
-        <div><label>Impresiones Color - Hoja Completa ($700):</label><input type="number" id="impColorHoja" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_impColorHoja">$0</span></div>
-        <div><label>Fotografía 10x15 cm ($600 c/u o 3x$1200):</label><input type="number" id="foto10x15" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_foto10x15">$0</span></div>
-        <div><label>Fotografía 13x18 cm ($1500):</label><input type="number" id="foto13x18" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_foto13x18">$0</span></div>
-        <div><label>Fotografía 21x30 cm ($2500):</label><input type="number" id="foto21x30" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_foto21x30">$0</span></div>
-        <div><label>Fotocopias Blanco y Negro ($400):</label><input type="number" id="fotocopiaBN" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_fotocopiaBN">$0</span></div>
-        <div><label>Fotocopias Color ($500):</label><input type="number" id="fotocopiaColor" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_fotocopiaColor">$0</span></div>
-        <div><label>Plastificado Pequeño ($500):</label><input type="number" id="plasticoPeq" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_plasticoPeq">$0</span></div>
-        <div><label>Plastificado Mediano ($600):</label><input type="number" id="plasticoMed" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_plasticoMed">$0</span></div>
-        <div><label>Plastificado Grande ($1000):</label><input type="number" id="plasticoGrande" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_plasticoGrande">$0</span></div>
-        <div><label>Llaveros ($2500 c/u):</label><input type="number" id="llaveros" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_llaveros">$0</span></div>
-        <div><label>Tarjetas Día Especial ($800 c/u o 2x$1.500):</label><input type="number" id="tarjetaDiaEspecial" min="0" placeholder="0" oninput="actualizar()"/><span id="sub_tarjetaDiaEspecial">$0</span></div>
-        <h3>Servicio Personalizado</h3>
-        <div style="background:#f0f7ff;border:1px solid #c5dff8;border-radius:8px;padding:12px 14px;margin-bottom:8px;">
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-            <input type="text" id="servicioNombre" placeholder="Nombre del servicio" style="width:200px;"/>
-            <input type="number" id="servicioCantidad" min="0" value="1" placeholder="Cant." style="width:65px;" />
-            <input type="number" id="servicioValor" min="0" placeholder="Valor $" style="width:90px;" />
-            <button type="button" onclick="agregarServicioPersonalizado()" style="background:#2980b9;color:white;padding:7px 16px;border-radius:6px;font-size:14px;font-weight:600;">＋ Agregar</button>
+
+        <!-- Lista dinámica de servicios -->
+        <div id="listaServiciosCatalogo" style="margin-bottom:4px;"></div>
+
+        <!-- Servicio Personalizado (igual a foto 2) -->
+        <div style="margin:16px 0 8px;">
+          <h3 style="margin-bottom:8px;">Servicio Personalizado</h3>
+          <div style="background:#f0f7ff;border:1px solid #c5dff8;border-radius:8px;padding:12px 14px;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="nuevoServNombre" placeholder="Nombre del servicio" style="width:200px;" />
+              <input type="number" id="nuevoServCantidad" min="1" value="1" style="width:65px;" />
+              <input type="number" id="nuevoServPrecio" min="0" placeholder="Valor $" style="width:100px;" />
+              <button type="button" onclick="agregarServicioCatalogo()" style="background:#2980b9;color:white;padding:7px 18px;border-radius:6px;font-size:14px;font-weight:600;">+ Agregar</button>
+            </div>
           </div>
-          <div id="listaServiciosPersonalizados" style="display:flex;flex-direction:column;gap:6px;"></div>
-          <div id="sub_servicioPersonalizado" style="font-weight:600;color:#1a5276;margin-top:6px;font-size:14px;display:none;">Subtotal servicios personalizados: $0</div>
         </div>
+
         <div id="resultado">Total a pagar: $0</div>
 
         <!-- Fecha de la venta -->
@@ -300,14 +294,124 @@
       </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
+      /* ════════════════════════════════════════════════════════════
+         SISTEMA DE CATÁLOGO DINÁMICO
+         - SERVICIOS_BASE: siempre presentes (los 15 originales)
+         - serviciosOcultos: IDs de base que el usuario ocultó
+         - serviciosExtras:  servicios nuevos agregados por el usuario
+      ════════════════════════════════════════════════════════════ */
       const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
       let total = 0;
-      let subtotalPersonalizado = 0;
-      let serviciosPersonalizados = []; // [{nombre, cantidad, valor, subtotal}]
+
+      // ── Servicios base (siempre presentes, no se pueden eliminar permanentemente
+      //    a menos que el usuario lo pida — se guardan como "ocultos" en localStorage)
+      const SERVICIOS_BASE = [
+        { id:'impBN',              nombre:'Impresiones Blanco y Negro',          precio:200  },
+        { id:'impColorTexto',      nombre:'Impresiones Color - Texto',           precio:300  },
+        { id:'impColorPeq',        nombre:'Impresiones Color - Imagen Pequeña',  precio:400  },
+        { id:'impColorMed',        nombre:'Impresiones Color - Imagen Mediana',  precio:500  },
+        { id:'impColorHoja',       nombre:'Impresiones Color - Hoja Completa',   precio:700  },
+        { id:'foto10x15',          nombre:'Fotografía 10x15 cm',                 precio:600  },
+        { id:'foto13x18',          nombre:'Fotografía 13x18 cm',                 precio:1500 },
+        { id:'foto21x30',          nombre:'Fotografía 21x30 cm',                 precio:2500 },
+        { id:'fotocopiaBN',        nombre:'Fotocopias Blanco y Negro',           precio:400  },
+        { id:'fotocopiaColor',     nombre:'Fotocopias Color',                    precio:500  },
+        { id:'plasticoPeq',        nombre:'Plastificado Pequeño',                precio:500  },
+        { id:'plasticoMed',        nombre:'Plastificado Mediano',                precio:600  },
+        { id:'plasticoGrande',     nombre:'Plastificado Grande',                 precio:1000 },
+        { id:'llaveros',           nombre:'Llaveros',                            precio:2500 },
+        { id:'tarjetaDiaEspecial', nombre:'Tarjetas Día Especial',               precio:800  },
+      ];
+
+      // IDs ocultos (servicios base que el usuario eliminó)
+      const getOcultos  = () => JSON.parse(localStorage.getItem('serviciosOcultos') || '[]');
+      const setOcultos  = (v) => localStorage.setItem('serviciosOcultos', JSON.stringify(v));
+
+      // Servicios extra agregados por el usuario
+      const getExtras   = () => JSON.parse(localStorage.getItem('serviciosExtras') || '[]');
+      const setExtras   = (v) => localStorage.setItem('serviciosExtras', JSON.stringify(v));
+
+      // Catálogo completo visible = base (no ocultos) + extras
+      const getCatalogo = () => {
+        const ocultos = getOcultos();
+        const base    = SERVICIOS_BASE.filter(s => !ocultos.includes(s.id));
+        return [...base, ...getExtras()];
+      };
+
+      // ── Cantidades actuales en el formulario (en memoria) ─────────────────
+      let cantidades = {};
+
+      const actualizar = () => {
+        total = 0;
+        getCatalogo().forEach(s => { total += (parseInt(cantidades[s.id]) || 0) * s.precio; });
+        document.getElementById('resultado').innerText = 'Total a pagar: $' + total.toLocaleString('es-CL');
+        actualizarVuelto();
+      };
+
+      const renderizarCatalogo = () => {
+        const catalogo = getCatalogo();
+        const contenedor = document.getElementById('listaServiciosCatalogo');
+        if (!contenedor) return;
+        if (catalogo.length === 0) {
+          contenedor.innerHTML = '<p style="color:#888;font-size:14px;padding:8px 0;">No hay servicios. Agrega uno abajo.</p>';
+          return;
+        }
+        contenedor.innerHTML = `<div style="display:grid;grid-template-columns:auto auto auto;align-items:center;width:100%;justify-content:start;">` +
+          catalogo.map((s) => {
+          const cant = cantidades[s.id] !== undefined ? cantidades[s.id] : 0;
+          const sub  = (parseInt(cant) || 0) * s.precio;
+          return `
+            <span style="font-size:14px;color:#333;padding:8px 0;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;gap:4px;">
+              <button type="button" onclick="eliminarServicio('${s.id}')" style="background:none;border:none;color:#e74c3c;font-size:12px;padding:0 4px 0 0;cursor:pointer;flex-shrink:0;">✕</button>
+              ${s.nombre} <span style="color:#555;">($${s.precio.toLocaleString('es-CL')}):</span>
+            </span>
+            <input type="number" min="0" value="${cant}"
+              style="width:90px;padding:5px 8px;border:1px solid #bbb;border-radius:4px 0 0 4px;border-right:none;font-size:14px;text-align:center;margin-left:8px;"
+              oninput="cantidades['${s.id}']=parseInt(this.value)||0; this.nextElementSibling.innerText='\$'+((parseInt(this.value)||0)*${s.precio}).toLocaleString('es-CL'); actualizar();" />
+            <span style="font-size:14px;color:#333;white-space:nowrap;min-width:36px;padding:5px 8px;border:1px solid #bbb;border-radius:0 4px 4px 0;background:#f5f5f5;">$${sub > 0 ? sub.toLocaleString('es-CL') : '0'}</span>
+          `;
+        }).join('') + `</div>`;
+      };
+
+      const eliminarServicio = (id) => {
+        if (!confirm('¿Eliminar este servicio de la lista?')) return;
+        delete cantidades[id];
+        // ¿Es un servicio base?
+        if (SERVICIOS_BASE.find(s => s.id === id)) {
+          const ocultos = getOcultos();
+          if (!ocultos.includes(id)) { ocultos.push(id); setOcultos(ocultos); }
+        } else {
+          // Es un extra del usuario
+          const extras = getExtras().filter(s => s.id !== id);
+          setExtras(extras);
+        }
+        renderizarCatalogo();
+        actualizar();
+      };
+
+      const agregarServicioCatalogo = () => {
+        const nombre   = document.getElementById('nuevoServNombre').value.trim();
+        const cantidad = parseInt(document.getElementById('nuevoServCantidad').value) || 1;
+        const precio   = parseInt(document.getElementById('nuevoServPrecio').value)   || 0;
+        if (!nombre) { alert('Por favor ingresa el nombre del servicio.'); document.getElementById('nuevoServNombre').focus(); return; }
+        if (precio <= 0) { alert('Por favor ingresa un precio válido (mayor a 0).'); document.getElementById('nuevoServPrecio').focus(); return; }
+        const extras = getExtras();
+        const id = 'extra_' + Date.now();
+        extras.push({ id, nombre, precio });
+        setExtras(extras);
+        // Pre-cargar la cantidad ingresada
+        cantidades[id] = cantidad;
+        document.getElementById('nuevoServNombre').value    = '';
+        document.getElementById('nuevoServCantidad').value  = '1';
+        document.getElementById('nuevoServPrecio').value    = '';
+        renderizarCatalogo();
+        actualizar();
+      };
+
+      const resetCantidades = () => { cantidades = {}; renderizarCatalogo(); actualizar(); };
 
       const cambiarTipoFecha = () => {
         const esManual = document.getElementById('fechaManual').checked;
@@ -322,102 +426,19 @@
       };
 
       const mostrarSeccion = (seccion) => {
-        document.getElementById('ventas').style.display = seccion === 'ventas' ? 'block' : 'none';
+        document.getElementById('ventas').style.display  = seccion === 'ventas'  ? 'block' : 'none';
         document.getElementById('diarios').style.display = seccion === 'diarios' ? 'block' : 'none';
-        document.getElementById('btn-ventas').classList.toggle('active', seccion === 'ventas');
+        document.getElementById('btn-ventas').classList.toggle('active',  seccion === 'ventas');
         document.getElementById('btn-diarios').classList.toggle('active', seccion === 'diarios');
+        if (seccion === 'ventas') renderizarCatalogo();
         if (seccion === 'diarios') {
-          // Preseleccionar mes y año actual al abrir
           const hoy = new Date();
-          const selMes = document.getElementById('selectMes');
+          const selMes  = document.getElementById('selectMes');
           const selAnio = document.getElementById('inputAnio');
-          if (!selMes.value) selMes.value = hoy.getMonth() + 1;
+          if (!selMes.value)  selMes.value  = hoy.getMonth() + 1;
           if (!selAnio.value) selAnio.value = hoy.getFullYear();
           mostrarHistorial();
         }
-      };
-
-      const actualizar = () => {
-        const impBN = (parseInt(document.getElementById('impBN').value)||0)*200;
-        document.getElementById('sub_impBN').innerText = '$'+impBN;
-        const impColorTexto = (parseInt(document.getElementById('impColorTexto').value)||0)*300;
-        document.getElementById('sub_impColorTexto').innerText = '$'+impColorTexto;
-        const impColorPeq = (parseInt(document.getElementById('impColorPeq').value)||0)*400;
-        document.getElementById('sub_impColorPeq').innerText = '$'+impColorPeq;
-        const impColorMed = (parseInt(document.getElementById('impColorMed').value)||0)*500;
-        document.getElementById('sub_impColorMed').innerText = '$'+impColorMed;
-        const impColorHoja = (parseInt(document.getElementById('impColorHoja').value)||0)*700;
-        document.getElementById('sub_impColorHoja').innerText = '$'+impColorHoja;
-        const foto10x15Cant = parseInt(document.getElementById('foto10x15').value)||0;
-        let foto10x15 = foto10x15Cant >= 3 ? Math.floor(foto10x15Cant/3)*1200+(foto10x15Cant%3)*600 : foto10x15Cant*600;
-        document.getElementById('sub_foto10x15').innerText = '$'+foto10x15;
-        const foto13x18 = (parseInt(document.getElementById('foto13x18').value)||0)*1500;
-        document.getElementById('sub_foto13x18').innerText = '$'+foto13x18;
-        const foto21x30 = (parseInt(document.getElementById('foto21x30').value)||0)*2500;
-        document.getElementById('sub_foto21x30').innerText = '$'+foto21x30;
-        const fotocopiaBN = (parseInt(document.getElementById('fotocopiaBN').value)||0)*400;
-        document.getElementById('sub_fotocopiaBN').innerText = '$'+fotocopiaBN;
-        const fotocopiaColor = (parseInt(document.getElementById('fotocopiaColor').value)||0)*500;
-        document.getElementById('sub_fotocopiaColor').innerText = '$'+fotocopiaColor;
-        const plasticoPeq = (parseInt(document.getElementById('plasticoPeq').value)||0)*500;
-        document.getElementById('sub_plasticoPeq').innerText = '$'+plasticoPeq;
-        const plasticoMed = (parseInt(document.getElementById('plasticoMed').value)||0)*600;
-        document.getElementById('sub_plasticoMed').innerText = '$'+plasticoMed;
-        const plasticoGrande = (parseInt(document.getElementById('plasticoGrande').value)||0)*1000;
-        document.getElementById('sub_plasticoGrande').innerText = '$'+plasticoGrande;
-        const llaveros = (parseInt(document.getElementById('llaveros').value)||0)*2500;
-        document.getElementById('sub_llaveros').innerText = '$'+llaveros;
-        const tarjetaDiaEspecialCant = parseInt(document.getElementById('tarjetaDiaEspecial').value)||0;
-        const tarjetaDiaEspecial = Math.floor(tarjetaDiaEspecialCant/2)*1500 + (tarjetaDiaEspecialCant%2)*800;
-        document.getElementById('sub_tarjetaDiaEspecial').innerText = '$'+tarjetaDiaEspecial;
-        total = impBN+impColorTexto+impColorPeq+impColorMed+impColorHoja+foto10x15+foto13x18+foto21x30+fotocopiaBN+fotocopiaColor+plasticoPeq+plasticoMed+plasticoGrande+llaveros+tarjetaDiaEspecial+subtotalPersonalizado;
-        document.getElementById('resultado').innerText = 'Total a pagar: $'+total;
-        actualizarVuelto();
-      };
-
-      const agregarServicioPersonalizado = () => {
-        const nombre = document.getElementById('servicioNombre').value.trim();
-        const cantidad = parseInt(document.getElementById('servicioCantidad').value)||0;
-        const valor = parseInt(document.getElementById('servicioValor').value)||0;
-        if (!nombre) { alert('Por favor ingresa el nombre del servicio.'); document.getElementById('servicioNombre').focus(); return; }
-        if (cantidad <= 0 || valor <= 0) { alert('Ingresa una cantidad y valor válidos (mayor a 0).'); return; }
-        const subtotal = cantidad * valor;
-        serviciosPersonalizados.push({ nombre, cantidad, valor, subtotal });
-        // Limpiar campos
-        document.getElementById('servicioNombre').value = '';
-        document.getElementById('servicioCantidad').value = '1';
-        document.getElementById('servicioValor').value = '0';
-        renderizarServiciosPersonalizados();
-        actualizar();
-      };
-
-      const eliminarServicioPersonalizado = (idx) => {
-        serviciosPersonalizados.splice(idx, 1);
-        renderizarServiciosPersonalizados();
-        actualizar();
-      };
-
-      const renderizarServiciosPersonalizados = () => {
-        const lista = document.getElementById('listaServiciosPersonalizados');
-        const subEl = document.getElementById('sub_servicioPersonalizado');
-        if (serviciosPersonalizados.length === 0) {
-          lista.innerHTML = '';
-          subEl.style.display = 'none';
-          return;
-        }
-        lista.innerHTML = serviciosPersonalizados.map((s, i) =>
-          `<div style="display:flex;justify-content:space-between;align-items:center;background:white;border:1px solid #d0e8f8;border-radius:6px;padding:6px 10px;font-size:13px;">
-            <span><strong>${s.nombre}</strong> — ${s.cantidad} × $${s.valor.toLocaleString('es-CL')} = <strong style="color:#1a5276;">$${s.subtotal.toLocaleString('es-CL')}</strong></span>
-            <button type="button" class="eliminar" onclick="eliminarServicioPersonalizado(${i})">✕</button>
-          </div>`
-        ).join('');
-        subtotalPersonalizado = serviciosPersonalizados.reduce((acc, s) => acc + s.subtotal, 0);
-        subEl.textContent = `Subtotal servicios personalizados: $${subtotalPersonalizado.toLocaleString('es-CL')}`;
-        subEl.style.display = 'block';
-      };
-
-      const actualizarPersonalizado = () => {
-        // Función legacy — ya no usada directamente
       };
 
       const cambiarMetodoPago = () => {
@@ -445,7 +466,6 @@
         const metodoPago = document.querySelector('input[name="metodoPago"]:checked').value;
         const esManual = document.getElementById('fechaManual').checked;
 
-        // Validar nombre fiado obligatorio
         if (metodoPago === 'fiado') {
           const nombre = document.getElementById('fiadoNombre').value.trim();
           const errorEl = document.getElementById('fiadoNombreError');
@@ -471,85 +491,66 @@
           dia = hoy.getDate(); mes = hoy.getMonth()+1; año = hoy.getFullYear();
         }
 
-        const g = id => parseInt(document.getElementById(id).value) || 0;
-        const foto10x15Cant = g('foto10x15');
-        const foto10x15Val = foto10x15Cant >= 3
-          ? Math.floor(foto10x15Cant/3)*1200 + (foto10x15Cant%3)*600
-          : foto10x15Cant * 600;
+        // Construir detalle dinámico del catálogo
+        const catalogo = getCatalogo();
+        const serviciosDetalle = catalogo
+          .filter(s => (parseInt(cantidades[s.id]) || 0) > 0)
+          .map(s => ({ nombre: s.nombre, precio: s.precio, cantidad: parseInt(cantidades[s.id]) || 0, subtotal: (parseInt(cantidades[s.id]) || 0) * s.precio }));
 
         const venta = {
           fecha: `${dia}/${mes}/${año}`,
           dia, mes, año,
-          total: total,
-          metodoPago: metodoPago,
+          total,
+          metodoPago,
           montoPagado: metodoPago === 'efectivo' ? (parseInt(document.getElementById('pago').value)||0) : 0,
           vuelto: metodoPago === 'efectivo' ? Math.max(0, (parseInt(document.getElementById('pago').value)||0) - total) : 0,
           fiadoNombre: metodoPago === 'fiado' ? (document.getElementById('fiadoNombre').value.trim()) : '',
           fiadoPagado: false,
           fiadoMetodoPago: null,
-          impBN:          g('impBN') * 200,
-          impColorTexto:  g('impColorTexto') * 300,
-          impColorPeq:    g('impColorPeq') * 400,
-          impColorMed:    g('impColorMed') * 500,
-          impColorHoja:   g('impColorHoja') * 700,
-          foto10x15:      foto10x15Val,
-          foto13x18:      g('foto13x18') * 1500,
-          foto21x30:      g('foto21x30') * 2500,
-          fotocopiaBN:    g('fotocopiaBN') * 400,
-          fotocopiaColor: g('fotocopiaColor') * 500,
-          plasticoPeq:    g('plasticoPeq') * 500,
-          plasticoMed:    g('plasticoMed') * 600,
-          plasticoGrande: g('plasticoGrande') * 1000,
-          llaveros:       g('llaveros') * 2500,
-          tarjetaDiaEspecial: (() => { const c = g('tarjetaDiaEspecial'); return Math.floor(c/2)*1500+(c%2)*800; })(),
-          servicioPersonalizado: serviciosPersonalizados.length === 1 ? serviciosPersonalizados[0].nombre : (serviciosPersonalizados.length > 1 ? serviciosPersonalizados.map(s=>s.nombre).join(', ') : ''),
-          subtotalPersonalizado: subtotalPersonalizado,
-          serviciosPersonalizadosDetalle: serviciosPersonalizados.slice()
+          serviciosDetalle,
+          // Campos legacy para compatibilidad con historial anterior
+          impBN: (cantidades['impBN']||0)*200,
+          impColorTexto: (cantidades['impColorTexto']||0)*300,
+          impColorPeq: (cantidades['impColorPeq']||0)*400,
+          impColorMed: (cantidades['impColorMed']||0)*500,
+          impColorHoja: (cantidades['impColorHoja']||0)*700,
+          foto10x15: (cantidades['foto10x15']||0)*600,
+          foto13x18: (cantidades['foto13x18']||0)*1500,
+          foto21x30: (cantidades['foto21x30']||0)*2500,
+          fotocopiaBN: (cantidades['fotocopiaBN']||0)*400,
+          fotocopiaColor: (cantidades['fotocopiaColor']||0)*500,
+          plasticoPeq: (cantidades['plasticoPeq']||0)*500,
+          plasticoMed: (cantidades['plasticoMed']||0)*600,
+          plasticoGrande: (cantidades['plasticoGrande']||0)*1000,
+          llaveros: (cantidades['llaveros']||0)*2500,
+          tarjetaDiaEspecial: (cantidades['tarjetaDiaEspecial']||0)*800,
+          servicioPersonalizado: serviciosDetalle.map(s=>s.nombre).join(', '),
+          subtotalPersonalizado: 0,
+          serviciosPersonalizadosDetalle: []
         };
+
         let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
         historial.push(venta);
         localStorage.setItem('historialVentas', JSON.stringify(historial));
 
-        // Resetear servicios personalizados
-        serviciosPersonalizados = [];
-        subtotalPersonalizado = 0;
-        renderizarServiciosPersonalizados();
-
         const fechaTexto = esManual ? `${dia}/${mes}/${año}` : 'hoy';
         alert(`Venta guardada correctamente (${fechaTexto})`);
 
-        // Resetear todos los campos del formulario sin recargar la página
-        const camposNum = ['impBN','impColorTexto','impColorPeq','impColorMed','impColorHoja',
-          'foto10x15','foto13x18','foto21x30','fotocopiaBN','fotocopiaColor',
-          'plasticoPeq','plasticoMed','plasticoGrande','llaveros','tarjetaDiaEspecial','pago'];
-        camposNum.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-
-        // Resetear subtotales a $0
-        const subIds = ['sub_impBN','sub_impColorTexto','sub_impColorPeq','sub_impColorMed','sub_impColorHoja',
-          'sub_foto10x15','sub_foto13x18','sub_foto21x30','sub_fotocopiaBN','sub_fotocopiaColor',
-          'sub_plasticoPeq','sub_plasticoMed','sub_plasticoGrande','sub_llaveros','sub_tarjetaDiaEspecial'];
-        subIds.forEach(id => { const el = document.getElementById(id); if(el) el.innerText = '$0'; });
-
-        // Resetear total y vuelto
+        // Resetear cantidades y totales
+        cantidades = {};
         total = 0;
+        renderizarCatalogo();
         document.getElementById('resultado').innerText = 'Total a pagar: $0';
         document.getElementById('vuelto').innerText = '';
-
-        // Resetear método de pago a efectivo
         document.getElementById('pagoEfectivo').checked = true;
         cambiarMetodoPago();
-
-        // Resetear fecha a "hoy"
+        document.getElementById('pago').value = '';
         document.getElementById('fechaHoy').checked = true;
         cambiarTipoFecha();
-
-        // Resetear campo fiado
         const fiadoNombreEl = document.getElementById('fiadoNombre');
         if (fiadoNombreEl) { fiadoNombreEl.value = ''; fiadoNombreEl.style.borderColor = '#e67e22'; }
         const fiadoErrorEl = document.getElementById('fiadoNombreError');
         if (fiadoErrorEl) fiadoErrorEl.style.display = 'none';
-
-        // Quedarse en la sección de registro de ventas
         mostrarSeccion('ventas');
       };
 
@@ -959,18 +960,27 @@
             }
 
             // Construir detalle de servicios realizados
-            const serviciosNombres = [
-              ['impBN','Imp. B/N'],['impColorTexto','Imp. Color Texto'],['impColorPeq','Imp. Color Peq.'],
-              ['impColorMed','Imp. Color Med.'],['impColorHoja','Imp. Color Hoja'],['foto10x15','Foto 10x15'],
-              ['foto13x18','Foto 13x18'],['foto21x30','Foto 21x30'],['fotocopiaBN','Fotocopia B/N'],
-              ['fotocopiaColor','Fotocopia Color'],['plasticoPeq','Plastificado Peq.'],
-              ['plasticoMed','Plastificado Med.'],['plasticoGrande','Plastificado Grande'],['llaveros','Llaveros'],
-              ['tarjetaDiaEspecial','Tarjeta Día Especial']
-            ];
-            const serviciosRealizados = serviciosNombres
-              .filter(([key]) => v[key] && v[key] > 0)
-              .map(([key, nombre]) => `${nombre}: ${fmt(v[key])}`)
-              .join(' · ');
+            let serviciosRealizados = '';
+            if (v.serviciosDetalle && v.serviciosDetalle.length > 0) {
+              serviciosRealizados = v.serviciosDetalle
+                .filter(s => s.subtotal > 0)
+                .map(s => `${s.nombre} (${s.cantidad}×$${s.precio.toLocaleString('es-CL')}): ${fmt(s.subtotal)}`)
+                .join(' · ');
+            } else {
+              // compatibilidad con ventas antiguas
+              const serviciosNombres = [
+                ['impBN','Imp. B/N'],['impColorTexto','Imp. Color Texto'],['impColorPeq','Imp. Color Peq.'],
+                ['impColorMed','Imp. Color Med.'],['impColorHoja','Imp. Color Hoja'],['foto10x15','Foto 10x15'],
+                ['foto13x18','Foto 13x18'],['foto21x30','Foto 21x30'],['fotocopiaBN','Fotocopia B/N'],
+                ['fotocopiaColor','Fotocopia Color'],['plasticoPeq','Plastificado Peq.'],
+                ['plasticoMed','Plastificado Med.'],['plasticoGrande','Plastificado Grande'],['llaveros','Llaveros'],
+                ['tarjetaDiaEspecial','Tarjeta Día Especial']
+              ];
+              serviciosRealizados = serviciosNombres
+                .filter(([key]) => v[key] && v[key] > 0)
+                .map(([key, nombre]) => `${nombre}: ${fmt(v[key])}`)
+                .join(' · ');
+            }
 
             let texto = `<span style="display:flex;flex-direction:column;gap:3px;flex:1;">`;
             texto += `<span>${v.fecha} — Total: <strong>${fmt(v.total)}</strong>`;
@@ -983,13 +993,6 @@
             texto += ` ${badge}</span>`;
             if (serviciosRealizados) {
               texto += `<span style="font-size:12px;color:#555;">${serviciosRealizados}</span>`;
-            }
-            if (v.serviciosPersonalizadosDetalle && v.serviciosPersonalizadosDetalle.length > 0) {
-              v.serviciosPersonalizadosDetalle.forEach(s => {
-                texto += `<span style="font-size:12px;color:#555;">🔧 ${s.nombre} (${s.cantidad}×$${s.valor.toLocaleString('es-CL')}): $${s.subtotal.toLocaleString('es-CL')}</span>`;
-              });
-            } else if (v.servicioPersonalizado && v.subtotalPersonalizado > 0) {
-              texto += `<span style="font-size:12px;color:#555;">${v.servicioPersonalizado}: ${fmt(v.subtotalPersonalizado)}</span>`;
             }
             texto += `</span>`;
 
@@ -1006,6 +1009,14 @@
         }
         document.getElementById('historial').innerHTML = contenido;
       };
+      document.addEventListener('DOMContentLoaded', () => {
+        // Limpiar claves de versiones anteriores del sistema
+        localStorage.removeItem('catalogoServicios');
+        localStorage.removeItem('serviciosGuardados');
+        localStorage.removeItem('serviciosOcultos'); // fuerza que los 15 servicios base aparezcan siempre
+        document.getElementById('btn-ventas').classList.add('active');
+        renderizarCatalogo();
+      });
     </script>
   </body>
 </html>
