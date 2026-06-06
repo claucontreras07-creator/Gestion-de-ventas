@@ -516,8 +516,12 @@
             return { nombre: s.nombre, precio: s.precio, cantidad: cant, subtotal: calcularSubtotal(s.id, cant, s.precio) };
           });
 
+        const ahora = new Date();
+        const horaVenta = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+
         const venta = {
           fecha: `${dia}/${mes}/${año}`,
+          hora: horaVenta,
           dia, mes, año,
           total,
           metodoPago,
@@ -1002,7 +1006,7 @@
             }
 
             let texto = `<span style="display:flex;flex-direction:column;gap:3px;flex:1;">`;
-            texto += `<span>${v.fecha} — Total: <strong>${fmt(v.total)}</strong>`;
+            texto += `<span>${v.fecha}${v.hora ? ` <span style="color:#888;font-size:12px;">🕐 ${v.hora}</span>` : ''} — Total: <strong>${fmt(v.total)}</strong>`;
             if (metodo === 'efectivo' && v.montoPagado) {
               texto += ` | Pagó: <strong>${fmt(v.montoPagado)}</strong> | Vuelto: <strong style="color:#27ae60;">${fmt(v.vuelto||0)}</strong>`;
             }
