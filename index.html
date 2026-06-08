@@ -520,6 +520,7 @@
         const horaVenta = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
 
         const venta = {
+          _id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
           fecha: `${dia}/${mes}/${año}`,
           hora: horaVenta,
           dia, mes, año,
@@ -577,10 +578,12 @@
         mostrarSeccion('ventas');
       };
 
-      const eliminarVenta = (index) => {
+      const eliminarVenta = (id) => {
         if (!confirm('¿Estás seguro de que deseas eliminar esta venta? Esta acción no se puede deshacer.')) return;
         let historial = JSON.parse(localStorage.getItem('historialVentas'))||[];
-        historial.splice(index, 1);
+        const idx = typeof id === 'string' ? historial.findIndex(v => v._id === id) : id;
+        if (idx === -1) return;
+        historial.splice(idx, 1);
         localStorage.setItem('historialVentas', JSON.stringify(historial));
         mostrarHistorial();
       };
@@ -1024,7 +1027,8 @@
             if (metodo === 'fiado' && !v.fiadoPagado) {
               botones += `<button class="btn-marcar-pagado" onclick="abrirModalPago(${v._realIndex})" style="margin-right:6px;">💰 Pagado</button>`;
             }
-            botones += `<button class="eliminar" onclick="eliminarVenta(${v._realIndex})">Eliminar</button>`;
+            const elimId = v._id ? `'${v._id}'` : v._realIndex;
+            botones += `<button class="eliminar" onclick="eliminarVenta(${elimId})">Eliminar</button>`;
 
             const bgRow = (metodo === 'fiado' && !v.fiadoPagado) ? 'background:#fffbf5;border-left:3px solid #e67e22;' : '';
             contenido += `<p style="align-items:flex-start;${bgRow}">${texto}${botones}</p>`;
