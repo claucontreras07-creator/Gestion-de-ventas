@@ -883,10 +883,10 @@
         const totalFiadoPendiente = filtrado.filter(v => v.metodoPago==='fiado' && !v.fiadoPagado).reduce((s,v)=>s+v.total,0);
         const totalFiadoPagado = filtrado.filter(v => v.metodoPago==='fiado' && v.fiadoPagado).reduce((s,v)=>s+v.total,0);
         const totalMLPendiente = filtrado.filter(v => v.metodoPago==='mercadolibre' && !v.mlPagoLiberado).reduce((s,v)=>s+v.total,0);
-        const totalMLLiberado = filtrado.filter(v => v.metodoPago==='mercadolibre' && v.mlPagoLiberado).reduce((s,v)=>s+v.total,0);
-        // Suma fiados pagados con efectivo/transferencia para stats
-        const efectivoReal = totalEfectivo + filtrado.filter(v=>v.metodoPago==='fiado'&&v.fiadoPagado&&v.fiadoMetodoPago==='efectivo').reduce((s,v)=>s+v.total,0);
-        const transferenciaReal = totalTransferencia + filtrado.filter(v=>v.metodoPago==='fiado'&&v.fiadoPagado&&v.fiadoMetodoPago==='transferencia').reduce((s,v)=>s+v.total,0) + totalMLLiberado;
+        const totalMLLiberado = filtradoPagado.filter(v => v.metodoPago==='mercadolibre' && v.mlPagoLiberado).reduce((s,v)=>s+v.total,0);
+        // Suma fiados pagados con efectivo/transferencia para stats; ML liberadas cuentan como transferencia
+        const efectivoReal = totalEfectivo + filtradoPagado.filter(v=>v.metodoPago==='fiado'&&v.fiadoPagado&&v.fiadoMetodoPago==='efectivo').reduce((s,v)=>s+v.total,0);
+        const transferenciaReal = totalTransferencia + filtradoPagado.filter(v=>v.metodoPago==='fiado'&&v.fiadoPagado&&v.fiadoMetodoPago==='transferencia').reduce((s,v)=>s+v.total,0) + totalMLLiberado;
 
         const labelPeriodo = diaSel && mesSel && anioSel ? `${diaSel}/${MESES[parseInt(mesSel)]}/${anioSel}`
           : mesSel && anioSel ? `${MESES[parseInt(mesSel)]} ${anioSel}`
